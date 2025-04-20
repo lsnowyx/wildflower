@@ -1,15 +1,9 @@
-#region using directives
-using LibVLCSharp.Shared;
-#endregion
-
+using Un4seen.Bass;
 namespace wildflower
 {
     public partial class Form1 : Form
     {
-        #region Fields
         private Label hoverTimeLabel = new Label();
-        private LibVLC libVLC;
-        private MediaPlayer mediaPlayer;
         private System.Windows.Forms.Timer stateTimer;
         private string[] paths;
         private int currentIndex = 0;
@@ -20,15 +14,12 @@ namespace wildflower
         private string playbackStateFile = "state.txt";
         private bool isTransitioning = false;
         private bool isLooped = false;
-        #endregion
-
-        #region Constructor
+        private int bassStream;
         public Form1()
         {
             InitializeComponent();
             this.Icon = new Icon("wildflowerico.ico");
 
-            // Progress bar hover label setup
             hoverTimeLabel.AutoSize = true;
             hoverTimeLabel.BackColor = Color.Black;
             hoverTimeLabel.ForeColor = Color.White;
@@ -38,22 +29,11 @@ namespace wildflower
             hoverTimeLabel.BringToFront();
             this.Controls.Add(hoverTimeLabel);
 
-            // VLC setup
-            libVLC = new LibVLC();
-            mediaPlayer = new MediaPlayer(libVLC);
+            lbl_volume.Text = "30%";
+            track_volume.Value = 30;
 
-            // Volume setup
-            lbl_volume.Text = "50%";
-            track_volume.Value = 50;
-            mediaPlayer.Volume = track_volume.Value;
-
-            // Events
-            mediaPlayer.EndReached += MediaPlayer_EndReached;
-            mediaPlayer.Playing += MediaPlayer_Playing;
+            Bass.BASS_Init(-1, 44100, BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero);
         }
-        #endregion
-
-        #region State Timer
         private void InitStateTimer()
         {
             SavePlaybackState();
@@ -62,63 +42,15 @@ namespace wildflower
             stateTimer.Tick += (s, e) => SavePlaybackState();
             stateTimer.Start();
         }
-
         private void SavePlaybackState()
         {
             if (paths == null || paths.Length == 0) return;
 
             int index = currentIndex;
-            long time = mediaPlayer.Time;
+            long time = Bass.BASS_ChannelGetPosition(bassStream);
 
             File.WriteAllText(playbackStateFile, $"{index}|{time}");
         }
-        #endregion
-
-        #region VLC Event Handlers
-        private void MediaPlayer_Playing(object sender, EventArgs e)
-        {
-            if (resumeTimeMs <= 0) return;
-
-            long timeToSeek = resumeTimeMs;
-            resumeTimeMs = -1;
-            ThreadPool.QueueUserWorkItem(_ =>
-            {
-                this.BeginInvoke(() =>
-                {
-                    mediaPlayer.Time = timeToSeek;
-                });
-            });
-        }
-
-        private void MediaPlayer_EndReached(object sender, EventArgs e)
-        {
-            if (isTransitioning) return;
-            isTransitioning = true;
-            ThreadPool.QueueUserWorkItem(_ =>
-            {
-                this.BeginInvoke(() =>
-                {
-                    int nextIndex = currentIndex;
-                    if (!isLooped)
-                    {
-                        nextIndex++;
-                    }
-
-                    if (nextIndex < paths.Length)
-                    {
-                        PlayTrack(nextIndex);
-                    }
-                    else
-                    {
-                        btn_shuffle_Click(sender, e);
-                    }
-                    isTransitioning = false;
-                });
-            });
-        }
-        #endregion
-
-        #region Form Load
         private void Form1_Load(object sender, EventArgs e)
         {
             if (File.Exists(musicFolderPath) && !File.Exists(playlistSaveFile))
@@ -142,16 +74,12 @@ namespace wildflower
                     currentIndex = index;
                     resumeTimeMs = time;
                     track_list.SelectedIndex = index;
-                    var media = new Media(libVLC, paths[index], FromType.FromPath);
-                    mediaPlayer.Play(media);
+                    PlayTrack(index, time);
                 }
             }
             SavePlaybackState();
             InitStateTimer();
         }
-        #endregion
-
-        #region File & Folder Loading
         private void btn_open_Click(object sender, EventArgs e)
         {
             FolderBrowserDialog fbd = new FolderBrowserDialog();
@@ -159,10 +87,9 @@ namespace wildflower
             {
                 musicFolder = fbd.SelectedPath;
                 File.WriteAllText(musicFolderPath, musicFolder);
-                LoadSongsFromFolder(musicFolder);
+                Form1_Load(sender, e);
             }
         }
-
         private void LoadPlaylistFromFile(string playlistFilePath)
         {
             if (!File.Exists(playlistFilePath)) return;
@@ -181,7 +108,6 @@ namespace wildflower
                     }
                 }
             }
-
             paths = validFiles.ToArray();
             track_list.Items.Clear();
             foreach (var filePath in paths)
@@ -189,7 +115,6 @@ namespace wildflower
                 track_list.Items.Add(Path.GetFileName(filePath));
             }
         }
-
         private void LoadSongsFromFolder(string folderPath)
         {
             paths = Directory.GetFiles(folderPath, "*.*", SearchOption.TopDirectoryOnly)
@@ -201,17 +126,10 @@ namespace wildflower
                 track_list.Items.Add(Path.GetFileName(file));
             }
         }
-        #endregion
-
-        #region Playback Controls
-        private void btn_play_Click(object sender, EventArgs e) => mediaPlayer.Play();
-
-        private void btn_pause_Click(object sender, EventArgs e) => mediaPlayer.Pause();
-
-        private void btn_stop_Click(object sender, EventArgs e) => mediaPlayer.Stop();
-
+        private void btn_play_Click(object sender, EventArgs e) => Bass.BASS_ChannelPlay(bassStream, false);
+        private void btn_pause_Click(object sender, EventArgs e) => Bass.BASS_ChannelPause(bassStream);
+        private void btn_stop_Click(object sender, EventArgs e) => Bass.BASS_ChannelStop(bassStream);
         private void track_list_SelectedIndexChanged(object sender, EventArgs e) => PlayTrack(track_list.SelectedIndex);
-
         private void btn_next_Click(object sender, EventArgs e)
         {
             if (track_list.SelectedIndex < track_list.Items.Count - 1)
@@ -219,7 +137,6 @@ namespace wildflower
                 track_list.SelectedIndex += 1;
             }
         }
-
         private void btn_preview_Click(object sender, EventArgs e)
         {
             if (track_list.SelectedIndex > 0)
@@ -227,58 +144,64 @@ namespace wildflower
                 track_list.SelectedIndex -= 1;
             }
         }
-        #endregion
-
-        #region Timer & Progress Bar
         private void timer1_Tick(object sender, EventArgs e)
         {
-            if (mediaPlayer.State == VLCState.Playing)
+            if (bassStream != 0 && Bass.BASS_ChannelIsActive(bassStream) != BASSActive.BASS_ACTIVE_STOPPED)
             {
-                p_bar.Maximum = (int)mediaPlayer.Length;
-                p_bar.Value = (int)mediaPlayer.Time;
-                TimeSpan current = TimeSpan.FromMilliseconds(mediaPlayer.Time);
-                TimeSpan total = TimeSpan.FromMilliseconds(mediaPlayer.Length);
-                lbl_track_start.Text = current.ToString(@"mm\:ss");
-                lbl_track_end.Text = total.ToString(@"mm\:ss");
+                long pos = Bass.BASS_ChannelGetPosition(bassStream);
+                long len = Bass.BASS_ChannelGetLength(bassStream);
+
+                int posMs = (int)Bass.BASS_ChannelBytes2Seconds(bassStream, pos) * 1000;
+                int lenMs = (int)Bass.BASS_ChannelBytes2Seconds(bassStream, len) * 1000;
+
+                p_bar.Maximum = lenMs;
+                p_bar.Value = Math.Min(posMs, lenMs);
+
+                lbl_track_start.Text = TimeSpan.FromMilliseconds(posMs).ToString(@"mm\:ss");
+                lbl_track_end.Text = TimeSpan.FromMilliseconds(lenMs).ToString(@"mm\:ss");
+            }
+            if (Bass.BASS_ChannelIsActive(bassStream) == BASSActive.BASS_ACTIVE_STOPPED && !isTransitioning)
+            {
+                isTransitioning = true;
+                int nextIndex = currentIndex;
+                if (!isLooped)
+                {
+                    nextIndex++;
+                }
+                if (nextIndex < paths.Length)
+                {
+                    PlayTrack(nextIndex);
+                }
+                else
+                {
+                    btn_shuffle_Click(sender, e);
+                }
+                isTransitioning = false;
             }
         }
-
         private void p_bar_MouseDown(object sender, MouseEventArgs e)
         {
-            mediaPlayer.Time = mediaPlayer.Length * e.X / p_bar.Width;
-            p_bar.Value = (int)mediaPlayer.Time;
+            int seekMs = p_bar.Maximum * e.X / p_bar.Width;
+            long bytePos = Bass.BASS_ChannelSeconds2Bytes(bassStream, seekMs / 1000.0);
+            Bass.BASS_ChannelSetPosition(bassStream, bytePos);
         }
-
         private void p_bar_MouseMove(object sender, MouseEventArgs e)
         {
-            if (mediaPlayer.Length > 0)
-            {
-                long hoveredTime = mediaPlayer.Length * e.X / p_bar.Width;
-                TimeSpan t = TimeSpan.FromMilliseconds(hoveredTime);
-                string timeStr = t.ToString(@"mm\:ss");
-                hoverTimeLabel.Text = timeStr;
-                hoverTimeLabel.Location = p_bar.PointToScreen(e.Location);
-                hoverTimeLabel.Location = this.PointToClient(hoverTimeLabel.Location);
-                hoverTimeLabel.Top -= 25;
-                hoverTimeLabel.Visible = true;
-            }
+            int hoverMs = p_bar.Maximum * e.X / p_bar.Width;
+            string timeStr = TimeSpan.FromMilliseconds(hoverMs).ToString(@"mm\:ss");
+            hoverTimeLabel.Text = timeStr;
+            hoverTimeLabel.Location = p_bar.PointToScreen(e.Location);
+            hoverTimeLabel.Location = this.PointToClient(hoverTimeLabel.Location);
+            hoverTimeLabel.Top -= 25;
+            hoverTimeLabel.Visible = true;
+            hoverTimeLabel.BringToFront();
         }
-
-        private void p_bar_MouseLeave(object sender, EventArgs e)
-        {
-            hoverTimeLabel.Visible = false;
-        }
-        #endregion
-
-        #region Volume
+        private void p_bar_MouseLeave(object sender, EventArgs e) => hoverTimeLabel.Visible = false;
         private void track_volume_Scroll(object sender, EventArgs e)
         {
-            lbl_volume.Text = track_volume.Value.ToString() + "%";
-            mediaPlayer.Volume = track_volume.Value;
+            lbl_volume.Text = track_volume.Value.ToString() + "%"; 
+            Bass.BASS_ChannelSetAttribute(bassStream, BASSAttribute.BASS_ATTRIB_VOL, track_volume.Value / 100f);
         }
-        #endregion
-
-        #region Playback Logic
         private static void ShuffleArray<T>(T[] array)
         {
             Random rng = new Random();
@@ -288,24 +211,25 @@ namespace wildflower
                 (array[i], array[j]) = (array[j], array[i]);
             }
         }
-
-        private void PlayTrack(int index)
+        private void PlayTrack(int index, long startAt = 0)
         {
             if (paths == null || index < 0 || index >= paths.Length) return;
 
             currentIndex = index;
+            Bass.BASS_ChannelStop(bassStream);
+            Bass.BASS_StreamFree(bassStream);
 
-            var media = new Media(libVLC, paths[index], FromType.FromPath);
-            media.AddOption(":volume=256");
-            media.AddOption(":aout=wasapi");
-            media.AddOption(":audio-filter=equalizer");
-            media.AddOption(":equalizer-bands=10 8 6 5 5 4 4 3 3 2");
-            media.AddOption(":equalizer-preamp=8");
+            bassStream = Bass.BASS_StreamCreateFile(paths[index], 0L, 0L, BASSFlag.BASS_DEFAULT);
 
-            mediaPlayer.Play(media);
+            if (startAt > 0)
+            {
+                Bass.BASS_ChannelSetPosition(bassStream, startAt);
+            }
+
+            Bass.BASS_ChannelPlay(bassStream, false);
+            Bass.BASS_ChannelSetAttribute(bassStream, BASSAttribute.BASS_ATTRIB_VOL, track_volume.Value / 100f);
             track_list.SelectedIndex = index;
         }
-
         private void btn_shuffle_Click(object sender, EventArgs e)
         {
             if (paths == null || paths.Length == 0) return;
@@ -319,19 +243,16 @@ namespace wildflower
             PlayTrack(0);
             SavePlaylistToFile();
         }
-
         private void btn_loop_Click(object sender, EventArgs e)
         {
             isLooped = !isLooped;
             btn_loop.Text = isLooped ? "UnLoop" : "Loop";
         }
-
         private void SavePlaylistToFile()
         {
             if (paths == null || paths.Length == 0) return;
 
             File.WriteAllLines(playlistSaveFile, paths);
         }
-        #endregion
     }
 }
