@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "wildflower", "wildflower\wildflower.csproj", "{7F36F5A5-4517-45E2-AC90-783BB9C2793D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7F36F5A5-4517-45E2-AC90-783BB9C2793D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F36F5A5-4517-45E2-AC90-783BB9C2793D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F36F5A5-4517-45E2-AC90-783BB9C2793D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F36F5A5-4517-45E2-AC90-783BB9C2793D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {85FB22DE-9B76-4C72-A02D-671CEAA428BC}
+	EndGlobalSection
+EndGlobal
