@@ -10,9 +10,9 @@ namespace wildflower
         private short shuffleClickCounter = 0;
         private long resumeTimeMs = -1;
         private string musicFolder;
-        private string musicFolderPath = "musicFolderPath.txt";
-        private string playlistSaveFile = "playlist.txt";
-        private string playbackStateFile = "state.txt";
+        private string musicFolderPath = "txtFiles\\musicFolderPath.txt";
+        private string playlistSaveFile = "txtFiles\\playlist.txt";
+        private string playbackStateFile = "txtFiles\\state.txt";
         private bool isTransitioning = false;
         private bool isLooped = false;
         private bool isPlaying = false;
@@ -30,15 +30,15 @@ namespace wildflower
         private void ChangePlayIcon(bool isPlayingg)
         {
             btn_play_pause.Image = isPlayingg ?
-                ResizeImage(Image.FromFile("iconPauseButton.png"), 50, 50) :
-                ResizeImage(Image.FromFile("iconPlayButton.png"), 50, 50);
+                ResizeImage(Image.FromFile("icons\\iconPauseButton.png"), 50, 50) :
+                ResizeImage(Image.FromFile("icons\\iconPlayButton.png"), 50, 50);
         }
         public Form1()
         {
             InitializeComponent();
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
-            this.Icon = new Icon("wildflowerico.ico");
+            this.Icon = new Icon("icons\\wildflowerico.ico");
 
             hoverTimeLabel.AutoSize = true;
             hoverTimeLabel.BackColor = Color.Black;
@@ -52,12 +52,13 @@ namespace wildflower
             lbl_volume.Text = "30%";
             track_volume.Value = 30;
 
-            btn_play_pause.Image = ResizeImage(Image.FromFile("iconPlayButton.png"), 50, 50);
-            btn_prevTrack.Image = ResizeImage(Image.FromFile("iconPreviousTrack.png"), 50, 50);
-            btn_nextTrack.Image = ResizeImage(Image.FromFile("iconNextTrack.png"), 50, 50);
-            btn_loopTrack.Image = ResizeImage(Image.FromFile("iconLoopTrack.png"), 50, 50);
-            btn_shuffleTrack.Image = ResizeImage(Image.FromFile("iconShuffleTrack.png"), 50, 50);
-
+            btn_play_pause.Image = ResizeImage(Image.FromFile("icons\\iconPlayButton.png"), 50, 50);
+            btn_prevTrack.Image = ResizeImage(Image.FromFile("icons\\iconPreviousTrack.png"), 50, 50);
+            btn_nextTrack.Image = ResizeImage(Image.FromFile("icons\\iconNextTrack.png"), 50, 50);
+            btn_loopTrack.Image = ResizeImage(Image.FromFile("icons\\iconLoopTrack.png"), 50, 50);
+            btn_shuffleTrack.Image = ResizeImage(Image.FromFile("icons\\iconShuffleTrack.png"), 50, 50);
+            btn_specificTrack.Image = ResizeImage(Image.FromFile("icons\\iconSpecificTrack.png"), 50, 50);
+            btn_options.Image = ResizeImage(Image.FromFile("icons\\iconMoreOptions.png"), 50, 50);
             Bass.BASS_Init(-1, 44100, BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero);
         }
         private void InitStateTimer()
@@ -295,8 +296,8 @@ namespace wildflower
         {
             isLooped = !isLooped;
             btn_loopTrack.Image = isLooped ?
-                ResizeImage(Image.FromFile("iconUnLoopTrack.png"), 50, 50) :
-                ResizeImage(Image.FromFile("iconLoopTrack.png"), 50, 50);
+                ResizeImage(Image.FromFile("icons\\iconUnLoopTrack.png"), 50, 50) :
+                ResizeImage(Image.FromFile("icons\\iconLoopTrack.png"), 50, 50);
         }
         private void btn_shuffleTrack_DoubleClick(object sender, EventArgs e)
         {
@@ -321,6 +322,12 @@ namespace wildflower
                 shuffleClickCounter = 0;
                 MessageBox.Show("Shuffle works only on doubleclick");
             }
+        }
+
+        private void btn_specificTrack_Click(object sender, EventArgs e)
+        {
+            SpecificTrack f2 = new SpecificTrack(paths);
+            f2.ShowDialog();
         }
     }
 }
