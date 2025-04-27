@@ -19,7 +19,6 @@
             InitializeComponent();
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
-
             this.Icon = new Icon("icons\\wildflowerico.ico");
             btn_open.Image = ResizeImage(Image.FromFile("icons\\iconOpenFolder.png"), 50, 50);
             btn_update.Image = ResizeImage(Image.FromFile("icons\\iconUpdatePlaylist.png"), 50, 50);
