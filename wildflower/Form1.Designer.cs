@@ -29,7 +29,6 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            btn_open = new Button();
             p_bar = new ProgressBar();
             track_list = new ListBox();
             track_volume = new TrackBar();
@@ -42,28 +41,16 @@
             btn_prevTrack = new PictureBox();
             btn_loopTrack = new PictureBox();
             btn_shuffleTrack = new PictureBox();
-            btn_specificTrack = new PictureBox();
             btn_options = new PictureBox();
+            stateTimer = new System.Windows.Forms.Timer(components);
             ((System.ComponentModel.ISupportInitialize)track_volume).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_play_pause).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_nextTrack).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_prevTrack).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_loopTrack).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_shuffleTrack).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)btn_specificTrack).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_options).BeginInit();
             SuspendLayout();
-            // 
-            // btn_open
-            // 
-            btn_open.FlatStyle = FlatStyle.Flat;
-            btn_open.Location = new Point(23, 58);
-            btn_open.Name = "btn_open";
-            btn_open.Size = new Size(75, 23);
-            btn_open.TabIndex = 5;
-            btn_open.Text = "Open";
-            btn_open.UseVisualStyleBackColor = true;
-            btn_open.Click += btn_open_Click;
             // 
             // p_bar
             // 
@@ -178,22 +165,14 @@
             btn_shuffleTrack.Click += btn_shuffleTrack_Click;
             btn_shuffleTrack.DoubleClick += btn_shuffleTrack_DoubleClick;
             // 
-            // btn_specificTrack
-            // 
-            btn_specificTrack.Location = new Point(76, 127);
-            btn_specificTrack.Name = "btn_specificTrack";
-            btn_specificTrack.Size = new Size(50, 50);
-            btn_specificTrack.TabIndex = 20;
-            btn_specificTrack.TabStop = false;
-            btn_specificTrack.Click += btn_specificTrack_Click;
-            // 
             // btn_options
             // 
-            btn_options.Location = new Point(-5, 117);
+            btn_options.Location = new Point(76, 127);
             btn_options.Name = "btn_options";
             btn_options.Size = new Size(50, 50);
             btn_options.TabIndex = 21;
             btn_options.TabStop = false;
+            btn_options.Click += btn_options_Click;
             // 
             // Form1
             // 
@@ -202,7 +181,6 @@
             BackColor = Color.Black;
             ClientSize = new Size(370, 208);
             Controls.Add(btn_options);
-            Controls.Add(btn_specificTrack);
             Controls.Add(btn_shuffleTrack);
             Controls.Add(btn_loopTrack);
             Controls.Add(btn_prevTrack);
@@ -214,7 +192,6 @@
             Controls.Add(track_volume);
             Controls.Add(track_list);
             Controls.Add(p_bar);
-            Controls.Add(btn_open);
             ForeColor = Color.White;
             Name = "Form1";
             Text = "wildflower";
@@ -225,14 +202,12 @@
             ((System.ComponentModel.ISupportInitialize)btn_prevTrack).EndInit();
             ((System.ComponentModel.ISupportInitialize)btn_loopTrack).EndInit();
             ((System.ComponentModel.ISupportInitialize)btn_shuffleTrack).EndInit();
-            ((System.ComponentModel.ISupportInitialize)btn_specificTrack).EndInit();
             ((System.ComponentModel.ISupportInitialize)btn_options).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
 
         #endregion
-        private Button btn_open;
         private ProgressBar p_bar;
         private ListBox track_list;
         private TrackBar track_volume;
@@ -245,7 +220,7 @@
         private PictureBox btn_prevTrack;
         private PictureBox btn_loopTrack;
         private PictureBox btn_shuffleTrack;
-        private PictureBox btn_specificTrack;
         private PictureBox btn_options;
+        private System.Windows.Forms.Timer stateTimer;
     }
 }
