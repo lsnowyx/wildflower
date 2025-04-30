@@ -43,6 +43,8 @@
             btn_shuffleTrack = new PictureBox();
             btn_options = new PictureBox();
             stateTimer = new System.Windows.Forms.Timer(components);
+            lbl_tempSongName = new Label();
+            btn_goBack = new PictureBox();
             ((System.ComponentModel.ISupportInitialize)track_volume).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_play_pause).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_nextTrack).BeginInit();
@@ -50,6 +52,7 @@
             ((System.ComponentModel.ISupportInitialize)btn_loopTrack).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_shuffleTrack).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_options).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)btn_goBack).BeginInit();
             SuspendLayout();
             // 
             // p_bar
@@ -174,12 +177,34 @@
             btn_options.TabStop = false;
             btn_options.Click += btn_options_Click;
             // 
+            // lbl_tempSongName
+            // 
+            lbl_tempSongName.AutoSize = true;
+            lbl_tempSongName.Location = new Point(188, 30);
+            lbl_tempSongName.Margin = new Padding(2, 0, 2, 0);
+            lbl_tempSongName.Name = "lbl_tempSongName";
+            lbl_tempSongName.Size = new Size(32, 15);
+            lbl_tempSongName.TabIndex = 22;
+            lbl_tempSongName.Text = "label";
+            lbl_tempSongName.Visible = false;
+            // 
+            // btn_goBack
+            // 
+            btn_goBack.Location = new Point(244, 71);
+            btn_goBack.Name = "btn_goBack";
+            btn_goBack.Size = new Size(50, 50);
+            btn_goBack.TabIndex = 23;
+            btn_goBack.TabStop = false;
+            btn_goBack.Click += btn_goBack_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.Black;
             ClientSize = new Size(370, 208);
+            Controls.Add(btn_goBack);
+            Controls.Add(lbl_tempSongName);
             Controls.Add(btn_options);
             Controls.Add(btn_shuffleTrack);
             Controls.Add(btn_loopTrack);
@@ -203,6 +228,7 @@
             ((System.ComponentModel.ISupportInitialize)btn_loopTrack).EndInit();
             ((System.ComponentModel.ISupportInitialize)btn_shuffleTrack).EndInit();
             ((System.ComponentModel.ISupportInitialize)btn_options).EndInit();
+            ((System.ComponentModel.ISupportInitialize)btn_goBack).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -222,5 +248,7 @@
         private PictureBox btn_shuffleTrack;
         private PictureBox btn_options;
         private System.Windows.Forms.Timer stateTimer;
+        private Label lbl_tempSongName;
+        private PictureBox btn_goBack;
     }
 }

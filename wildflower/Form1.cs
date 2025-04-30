@@ -16,14 +16,19 @@ namespace wildflower
         private bool isLooped = false;
         private bool isPlaying = false;
         private int bassStream;
+        private bool bassTempIsPlaying = false;
+        private int bassTempSongIndex;
+
 
         #region musicLibraryDependentCode
         //musicLibraryDependentCode
         private void PlayTrack(int index, long startAt = 0)
         {
             if (paths == null || index < 0 || index >= paths.Length) return;
-
-            currentIndex = index;
+            if (!bassTempIsPlaying)
+            {
+                currentIndex = index;
+            }
             Bass.BASS_ChannelStop(bassStream);
             Bass.BASS_StreamFree(bassStream);
 
@@ -41,7 +46,6 @@ namespace wildflower
             btn_play_pause.Image = isPlaying ?
                 ResizeImage(Image.FromFile("icons\\iconPauseButton.png"), 50, 50) :
                 ResizeImage(Image.FromFile("icons\\iconPlayButton.png"), 50, 50);
-
         }
         private void timer1_Tick(object sender, EventArgs e)
         {
@@ -74,6 +78,17 @@ namespace wildflower
                 else
                 {
                     btn_shuffleTrack_DoubleClick(sender, e);
+                }
+                if (bassTempIsPlaying)
+                {
+                    if (isLooped)
+                    {
+                        PlayTrack(bassTempSongIndex);
+                    }
+                    else
+                    {
+                        btn_goBack_Click(sender, e);
+                    }
                 }
                 isTransitioning = false;
             }
@@ -119,6 +134,10 @@ namespace wildflower
             lbl_volume.Text = "30%";
             track_volume.Value = 30;
 
+            stateTimer.Interval = 30000;
+            btn_goBack.Enabled = false;
+            btn_goBack.Visible = false;
+
             #region p_barHoverLabelData
             hoverTimeLabel.AutoSize = true;
             hoverTimeLabel.BackColor = Color.Black;
@@ -138,13 +157,13 @@ namespace wildflower
             btn_loopTrack.Image = ResizeImage(Image.FromFile("icons\\iconLoopTrack.png"), 50, 50);
             btn_shuffleTrack.Image = ResizeImage(Image.FromFile("icons\\iconShuffleTrack.png"), 50, 50);
             btn_options.Image = ResizeImage(Image.FromFile("icons\\iconMoreOptions.png"), 50, 50);
+            btn_goBack.Image = ResizeImage(Image.FromFile("icons\\iconGoBack.png"), 50, 50);
             #endregion
 
             Bass.BASS_Init(-1, 44100, BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero);
         }
         private void InitStateTimer()
         {
-            stateTimer.Interval = 30000;
             stateTimer.Tick += (s, e) => SavePlaybackState();
             stateTimer.Start();
         }
@@ -185,6 +204,8 @@ namespace wildflower
             }
             SavePlaybackState();
             InitStateTimer();
+            CleanMissingTracks();
+            UpdatePlaylistWithNewSongs();
         }
         private void LoadPlaylistFromFile(string playlistFilePath)
         {
@@ -246,6 +267,34 @@ namespace wildflower
                 track_list.Items.Add(Path.GetFileName(newSong));
             }
 
+            File.WriteAllLines(playlistSaveFile, paths);
+        }
+        private void CleanMissingTracks()
+        {
+            musicFolder = File.ReadAllText(musicFolderPath);
+            if (paths == null || paths.Length == 0 || string.IsNullOrEmpty(musicFolder) || !Directory.Exists(musicFolder))
+                return;
+
+            List<string> validPaths = new List<string>();
+            for (int i = 0; i < paths.Length; i++)
+            {
+                string file = paths[i];
+                bool exists = File.Exists(file);
+
+                if (exists || i <= currentIndex)
+                {
+                    validPaths.Add(file);
+                }
+                else
+                {
+                    if (i < track_list.Items.Count)
+                    {
+                        track_list.Items.RemoveAt(i);
+                    }
+                }
+            }
+
+            paths = validPaths.ToArray();
             File.WriteAllLines(playlistSaveFile, paths);
         }
         private void track_list_SelectedIndexChanged(object sender, EventArgs e) => PlayTrack(track_list.SelectedIndex);
@@ -366,8 +415,73 @@ namespace wildflower
             }
             if (f2.updateBtnPressed)
             {
+                CleanMissingTracks();
                 UpdatePlaylistWithNewSongs();
             }
+            if (f2.searchBtnPressed)
+            {
+                if (isPlaying)
+                {
+                    btn_play_pause_Click(sender, e);
+                }
+                SearchButtonPressed();
+            }
         }
+        private void SearchButtonPressed()
+        {
+            if (paths == null || paths.Length == 0)
+            {
+                MessageBox.Show("Nowhere to search from");
+                return;
+            }
+            Search f2 = new Search(paths);
+            f2.ShowDialog();
+            if (f2.playBtnPressed && (f2.songToPlay != null || f2.songToPlay != string.Empty))
+            {
+                if (paths == null || f2.songToPlay == null) return;
+                bassTempSongIndex = Array.FindIndex(paths, f => f.Contains(f2.songToPlay));
+                TempSongIsPlaying(true);
+            }
+        }
+        private void TempSongIsPlaying(bool tempSongIsPlaying)
+        {
+            bassTempIsPlaying = tempSongIsPlaying;
+            btn_shuffleTrack.Enabled = !tempSongIsPlaying;
+            track_list.Enabled = !tempSongIsPlaying;
+            track_list.Visible = !tempSongIsPlaying;
+            btn_goBack.Enabled = tempSongIsPlaying;
+            btn_goBack.Visible = tempSongIsPlaying;
+            if (tempSongIsPlaying)
+            {
+                stateTimer.Stop();
+            }
+            if (!tempSongIsPlaying)
+            {
+                stateTimer.Start();
+            }
+            if (tempSongIsPlaying)
+            {
+                PlayTrack(bassTempSongIndex);
+            }
+            if (!tempSongIsPlaying)
+            {
+                track_list.SelectedIndex = currentIndex;
+                PlayTrack(currentIndex, resumeTimeMs);
+            }
+            lbl_tempSongName.Visible = tempSongIsPlaying;
+            if (tempSongIsPlaying)
+            {
+                lbl_tempSongName.Text = Path.GetFileName(paths[bassTempSongIndex]);
+            }
+            if (!tempSongIsPlaying)
+            {
+                lbl_tempSongName.Text = string.Empty;
+            }
+        }
+        private void btn_goBack_Click(object sender, EventArgs e)
+        {
+            TempSongIsPlaying(false);
+        }
+
     }
 }
