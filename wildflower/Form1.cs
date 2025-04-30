@@ -204,6 +204,8 @@ namespace wildflower
             }
             SavePlaybackState();
             InitStateTimer();
+            CleanMissingTracks();
+            UpdatePlaylistWithNewSongs();
         }
         private void LoadPlaylistFromFile(string playlistFilePath)
         {
@@ -265,6 +267,34 @@ namespace wildflower
                 track_list.Items.Add(Path.GetFileName(newSong));
             }
 
+            File.WriteAllLines(playlistSaveFile, paths);
+        }
+        private void CleanMissingTracks()
+        {
+            musicFolder = File.ReadAllText(musicFolderPath);
+            if (paths == null || paths.Length == 0 || string.IsNullOrEmpty(musicFolder) || !Directory.Exists(musicFolder))
+                return;
+
+            List<string> validPaths = new List<string>();
+            for (int i = 0; i < paths.Length; i++)
+            {
+                string file = paths[i];
+                bool exists = File.Exists(file);
+
+                if (exists || i <= currentIndex)
+                {
+                    validPaths.Add(file);
+                }
+                else
+                {
+                    if (i < track_list.Items.Count)
+                    {
+                        track_list.Items.RemoveAt(i);
+                    }
+                }
+            }
+
+            paths = validPaths.ToArray();
             File.WriteAllLines(playlistSaveFile, paths);
         }
         private void track_list_SelectedIndexChanged(object sender, EventArgs e) => PlayTrack(track_list.SelectedIndex);
@@ -385,6 +415,7 @@ namespace wildflower
             }
             if (f2.updateBtnPressed)
             {
+                CleanMissingTracks();
                 UpdatePlaylistWithNewSongs();
             }
             if (f2.searchBtnPressed)
@@ -451,5 +482,6 @@ namespace wildflower
         {
             TempSongIsPlaying(false);
         }
+
     }
 }
