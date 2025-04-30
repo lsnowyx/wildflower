@@ -21,7 +21,8 @@
         public static List<string> GetMatchingElements(string[] array, string substring, bool ignoreCase = true)
         {
             if (array == null || substring == null) return null;
-            return array.Where(f => f.Contains(substring))
+            return array.Where(f => f
+                .IndexOf(substring, StringComparison.OrdinalIgnoreCase) >= 0)
                 .Select(f => Path.GetFileName(f)).ToList();
         }
         private static Image ResizeImage(Image img, int width, int height)

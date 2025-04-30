@@ -67,7 +67,7 @@ namespace wildflower
             {
                 isTransitioning = true;
                 int nextIndex = currentIndex;
-                if (!isLooped || !bassTempIsPlaying)
+                if (!isLooped)
                 {
                     nextIndex++;
                 }
@@ -81,7 +81,14 @@ namespace wildflower
                 }
                 if (bassTempIsPlaying)
                 {
-                    btn_goBack_Click(sender, e);
+                    if (isLooped)
+                    {
+                        PlayTrack(bassTempSongIndex);
+                    }
+                    else
+                    {
+                        btn_goBack_Click(sender, e);
+                    }
                 }
                 isTransitioning = false;
             }
