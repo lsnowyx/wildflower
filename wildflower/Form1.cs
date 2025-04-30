@@ -415,6 +415,7 @@ namespace wildflower
         private void TempSongIsPlaying(bool tempSongIsPlaying)
         {
             bassTempIsPlaying = tempSongIsPlaying;
+            btn_shuffleTrack.Enabled = !tempSongIsPlaying;
             track_list.Enabled = !tempSongIsPlaying;
             track_list.Visible = !tempSongIsPlaying;
             btn_goBack.Enabled = tempSongIsPlaying;
