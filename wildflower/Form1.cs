@@ -9,9 +9,11 @@ namespace wildflower
         private short shuffleClickCounter = 0;
         private long resumeTimeMs = -1;
         private string musicFolder;
-        private string musicFolderPath = "txtFiles\\musicFolderPath.txt";
-        private string playlistSaveFile = "txtFiles\\playlist.txt";
-        private string playbackStateFile = "txtFiles\\state.txt";
+        private string playlistsDir = "playlists";
+        private string basePlaylistPath;
+        private string musicFolderPath => Path.Combine(basePlaylistPath, "musicFolderPath.txt");
+        private string playlistSaveFile => Path.Combine(basePlaylistPath, "playlist.txt");
+        private string playbackStateFile => Path.Combine(basePlaylistPath, "state.txt");
         private bool isTransitioning = false;
         private bool isLooped = false;
         private bool isPlaying = false;
@@ -161,6 +163,7 @@ namespace wildflower
             #endregion
 
             Bass.BASS_Init(-1, 44100, BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero);
+            InitializePlaylistPath();
         }
         private void InitStateTimer()
         {
@@ -173,11 +176,18 @@ namespace wildflower
 
             int index = currentIndex;
             long time = Bass.BASS_ChannelGetPosition(bassStream);
+            resumeTimeMs = time;
 
             File.WriteAllText(playbackStateFile, $"{index}|{time}");
         }
         private void Form1_Load(object sender, EventArgs e)
         {
+            if (!File.Exists(musicFolderPath))
+            {
+                MessageBox.Show("Please select a song folder");
+                btn_open_Click(sender, e);
+                return;
+            }
             if (File.Exists(musicFolderPath) && !File.Exists(playlistSaveFile))
             {
                 string savedPath = File.ReadAllText(musicFolderPath);
@@ -198,34 +208,18 @@ namespace wildflower
                 {
                     currentIndex = index;
                     resumeTimeMs = time;
-                    track_list.SelectedIndex = index;
-                    PlayTrack(index, time);
+                    RefreshPlaylist();
+                    PlayTrack(currentIndex, resumeTimeMs);
                 }
             }
             SavePlaybackState();
             InitStateTimer();
-            CleanMissingTracks();
-            UpdatePlaylistWithNewSongs();
         }
         private void LoadPlaylistFromFile(string playlistFilePath)
         {
             if (!File.Exists(playlistFilePath)) return;
-
             var lines = File.ReadAllLines(playlistFilePath);
-            var validFiles = new List<string>();
-
-            foreach (var line in lines)
-            {
-                if (File.Exists(line))
-                {
-                    string ext = Path.GetExtension(line).ToLower();
-                    if (ext == ".mp3" || ext == ".wav" || ext == ".flac" || ext == ".ogg")
-                    {
-                        validFiles.Add(line);
-                    }
-                }
-            }
-            paths = validFiles.ToArray();
+            paths = lines.ToArray();
             track_list.Items.Clear();
             foreach (var filePath in paths)
             {
@@ -243,61 +237,6 @@ namespace wildflower
                 track_list.Items.Add(Path.GetFileName(file));
             }
         }
-        private void UpdatePlaylistWithNewSongs()
-        {
-            musicFolder = File.ReadAllText(musicFolderPath);
-            if (string.IsNullOrEmpty(musicFolder) || !Directory.Exists(musicFolder))
-                return;
-
-            var allSongsInFolder = Directory.GetFiles(musicFolder, "*.*", SearchOption.TopDirectoryOnly)
-                .Where(f => f.EndsWith(".mp3") || f.EndsWith(".wav") || f.EndsWith(".flac") || f.EndsWith(".ogg"))
-                .ToList();
-
-            var currentPathsSet = new HashSet<string>(paths, StringComparer.OrdinalIgnoreCase);
-
-            var newSongs = allSongsInFolder.Where(f => !currentPathsSet.Contains(f)).ToList();
-
-            if (newSongs.Count == 0)
-                return;
-
-            paths = paths.Concat(newSongs).ToArray();
-
-            foreach (var newSong in newSongs)
-            {
-                track_list.Items.Add(Path.GetFileName(newSong));
-            }
-
-            File.WriteAllLines(playlistSaveFile, paths);
-        }
-        private void CleanMissingTracks()
-        {
-            musicFolder = File.ReadAllText(musicFolderPath);
-            if (paths == null || paths.Length == 0 || string.IsNullOrEmpty(musicFolder) || !Directory.Exists(musicFolder))
-                return;
-
-            List<string> validPaths = new List<string>();
-            for (int i = 0; i < paths.Length; i++)
-            {
-                string file = paths[i];
-                bool exists = File.Exists(file);
-
-                if (exists || i <= currentIndex)
-                {
-                    validPaths.Add(file);
-                }
-                else
-                {
-                    if (i < track_list.Items.Count)
-                    {
-                        track_list.Items.RemoveAt(i);
-                    }
-                }
-            }
-
-            paths = validPaths.ToArray();
-            File.WriteAllLines(playlistSaveFile, paths);
-        }
-        private void track_list_SelectedIndexChanged(object sender, EventArgs e) => PlayTrack(track_list.SelectedIndex);
         private void p_bar_MouseMove(object sender, MouseEventArgs e)
         {
             int hoverMs = p_bar.Maximum * e.X / p_bar.Width;
@@ -336,22 +275,50 @@ namespace wildflower
             if (fbd.ShowDialog() == DialogResult.OK)
             {
                 musicFolder = fbd.SelectedPath;
-                File.WriteAllText(musicFolderPath, musicFolder);
+                foreach (string dir in Directory.GetDirectories(playlistsDir))
+                {
+                    string existingPathFile = Path.Combine(dir, "musicFolderPath.txt");
+                    if (File.Exists(existingPathFile))
+                    {
+                        string existingPath = File.ReadAllText(existingPathFile);
+                        if (string.Equals(existingPath, musicFolder, StringComparison.OrdinalIgnoreCase))
+                        {
+                            MessageBox.Show("This folder is already part of a playlist.", "Duplicate Playlist", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            return;
+                        }
+                    }
+                }
+                int nextIndex = 0;
+                while (Directory.Exists(Path.Combine(playlistsDir, nextIndex.ToString())))
+                    nextIndex++;
+
+                string newPlaylistDir = Path.Combine(playlistsDir, nextIndex.ToString());
+                Directory.CreateDirectory(newPlaylistDir);
+
+                File.WriteAllText(Path.Combine(playlistsDir, "lastUsed.txt"), nextIndex.ToString());
+
+                File.WriteAllText(Path.Combine(newPlaylistDir, "musicFolderPath.txt"), musicFolder);
+
+
+                basePlaylistPath = newPlaylistDir;
+
                 Form1_Load(sender, e);
             }
         }
         private void btn_nextTrack_Click(object sender, EventArgs e)
         {
-            if (track_list.SelectedIndex < track_list.Items.Count - 1)
+            if (currentIndex < paths.Length - 1)
             {
-                track_list.SelectedIndex += 1;
+                currentIndex++;
+                PlayTrack(currentIndex);
             }
         }
         private void btn_prevTrack_Click(object sender, EventArgs e)
         {
-            if (track_list.SelectedIndex > 0)
+            if (currentIndex > 0)
             {
-                track_list.SelectedIndex -= 1;
+                currentIndex--;
+                PlayTrack(currentIndex);
             }
         }
         private void btn_loopTrack_Click(object sender, EventArgs e)
@@ -415,8 +382,15 @@ namespace wildflower
             }
             if (f2.updateBtnPressed)
             {
-                CleanMissingTracks();
-                UpdatePlaylistWithNewSongs();
+                if (paths == null || paths.Length == 0)
+                {
+                    MessageBox.Show("Nowhere to update from");
+                    return;
+                }
+                RefreshPlaylist();
+                SavePlaybackState();
+                PlayTrack(currentIndex, resumeTimeMs);
+                return;
             }
             if (f2.searchBtnPressed)
             {
@@ -425,7 +399,33 @@ namespace wildflower
                     btn_play_pause_Click(sender, e);
                 }
                 SearchButtonPressed();
+                return;
             }
+            if (f2.playlistBtnPressed)
+            {
+                if (isPlaying)
+                {
+                    btn_play_pause_Click(sender, e);
+                }
+                PlayListButtonPressed();
+            }
+        }
+        private void PlayListButtonPressed()
+        {
+            Playlists f2 = new Playlists(playlistsDir, Path.GetFileName(basePlaylistPath));
+            f2.ShowDialog();
+            basePlaylistPath = Path.Combine(playlistsDir, f2.Playlist2Play);
+            if (!File.Exists(basePlaylistPath + "\\musicFolderPath.txt"))
+            {
+                if (!FindAvailablePlaylist())
+                {
+                    MessageBox.Show("All playlists have been deleted");
+                    paths = null;
+                    track_list.Items.Clear();
+                }
+            }
+            Form1_Load(this, EventArgs.Empty);
+            File.WriteAllText("playlists\\lastUsed.txt", f2.Playlist2Play);
         }
         private void SearchButtonPressed()
         {
@@ -482,6 +482,168 @@ namespace wildflower
         {
             TempSongIsPlaying(false);
         }
+        private void track_list_MouseDown(object sender, MouseEventArgs e)
+        {
+            int index = track_list.IndexFromPoint(e.Location);
+            if (index != ListBox.NoMatches)
+            {
+                track_list.SelectedIndex = index;
+                PlayTrack(index);
+            }
+        }
+        private void InitializePlaylistPath()
+        {
+            string lastUsedFile = Path.Combine(playlistsDir, "lastUsed.txt");
 
+            if (!Directory.Exists(playlistsDir))
+                Directory.CreateDirectory(playlistsDir);
+
+            string[] allPlaylists = Directory.GetDirectories(playlistsDir);
+
+            string validPlaylistIndex = null;
+
+            // 1. Check lastUsed.txt
+            if (File.Exists(lastUsedFile))
+            {
+                string savedIndex = File.ReadAllText(lastUsedFile).Trim();
+                string savedPath = Path.Combine(playlistsDir, savedIndex);
+                if (Directory.Exists(savedPath) && File.Exists(Path.Combine(savedPath, "musicFolderPath.txt")))
+                {
+                    validPlaylistIndex = savedIndex;
+                }
+            }
+
+            // 2. If lastUsed is missing/invalid, find first valid playlist
+            if (validPlaylistIndex == null)
+            {
+                foreach (string dir in allPlaylists)
+                {
+                    if (File.Exists(Path.Combine(dir, "musicFolderPath.txt")))
+                    {
+                        validPlaylistIndex = Path.GetFileName(dir);
+                        break;
+                    }
+                }
+            }
+
+            // 3. If none found, ask user to select a folder
+            if (validPlaylistIndex == null)
+            {
+                MessageBox.Show("No valid playlist found. Please select a folder.");
+                btn_open_Click(this, EventArgs.Empty); // force open
+                return;
+            }
+
+            // 4. Save and assign
+            File.WriteAllText(lastUsedFile, validPlaylistIndex);
+            basePlaylistPath = Path.Combine(playlistsDir, validPlaylistIndex);
+        }
+        private void RefreshPlaylist()
+        {
+            musicFolder = File.ReadAllText(musicFolderPath);
+            if (string.IsNullOrEmpty(musicFolder) || !Directory.Exists(musicFolder))
+            {
+                MessageBox.Show("Update your music folder path");
+                RemoveInvalidPlaylists();
+                btn_open_Click(this, EventArgs.Empty);
+                if (paths == null)
+                {
+                    InitializePlaylistPath();
+                    Form1_Load(this, EventArgs.Empty);
+                }
+                return;
+            }
+            CleanMissingTracks();
+            UpdatePlaylistWithNewSongs();
+        }
+        private void UpdatePlaylistWithNewSongs()
+        {
+            var allSongsInFolder = Directory.GetFiles(musicFolder, "*.*", SearchOption.TopDirectoryOnly)
+                .Where(f => f.EndsWith(".mp3") || f.EndsWith(".wav") || f.EndsWith(".flac") || f.EndsWith(".ogg"))
+                .ToList();
+
+            var currentPathsSet = new HashSet<string>(paths, StringComparer.OrdinalIgnoreCase);
+
+            var newSongs = allSongsInFolder.Where(f => !currentPathsSet.Contains(f)).ToList();
+
+            if (newSongs.Count == 0)
+                return;
+
+            paths = paths.Concat(newSongs).ToArray();
+
+            foreach (var newSong in newSongs)
+            {
+                track_list.Items.Add(Path.GetFileName(newSong));
+            }
+
+            File.WriteAllLines(playlistSaveFile, paths);
+        }
+        private void CleanMissingTracks()
+        {
+            int removedBeforeCurrent = 0;
+            List<string> validPaths = new List<string>();
+            for (int i = 0; i < paths.Length; i++)
+            {
+                string file = paths[i];
+                bool exists = File.Exists(file);
+
+                if (exists)
+                {
+                    validPaths.Add(file);
+                }
+                else
+                {
+                    if (i < currentIndex)
+                    {
+                        removedBeforeCurrent++;
+                    }
+                }
+            }
+            track_list.Items.Clear();
+            foreach (string path in validPaths)
+            {
+                track_list.Items.Add(Path.GetFileName(path));
+            }
+            currentIndex = Math.Max(0, currentIndex - removedBeforeCurrent);
+            paths = validPaths.ToArray();
+            File.WriteAllLines(playlistSaveFile, paths);
+        }
+        private bool FindAvailablePlaylist()
+        {
+            foreach (string dir in Directory.GetDirectories(playlistsDir))
+            {
+                string existingPathFile = Path.Combine(dir, "musicFolderPath.txt");
+                if (File.Exists(existingPathFile))
+                {
+                    basePlaylistPath = dir;
+                    File.WriteAllText("playlists\\lastUsed.txt", Path.GetFileName(dir));
+                    return true;
+                }
+            }
+            return false;
+        }
+        private void RemoveInvalidPlaylists()
+        {
+            paths = null;
+            foreach (string playlistDir in Directory.GetDirectories(playlistsDir))
+            {
+                string pathFile = Path.Combine(playlistDir, "musicFolderPath.txt");
+                if (File.Exists(pathFile))
+                {
+                    string folderPath = File.ReadAllText(pathFile).Trim();
+                    if (!Directory.Exists(folderPath))
+                    {
+                        try
+                        {
+                            Directory.Delete(playlistDir, recursive: true);
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show($"Could not delete playlist folder '{playlistDir}': {ex.Message}");
+                        }
+                    }
+                }
+            }
+        }
     }
 }

@@ -77,7 +77,7 @@
             track_list.Name = "track_list";
             track_list.Size = new Size(173, 165);
             track_list.TabIndex = 7;
-            track_list.SelectedIndexChanged += track_list_SelectedIndexChanged;
+            track_list.MouseDown += track_list_MouseDown;
             // 
             // track_volume
             // 
