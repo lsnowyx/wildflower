@@ -101,16 +101,18 @@
         }
         private void Playlists_Load(object sender, EventArgs e)
         {
+            int i = 0;
             foreach (string dir in Directory.GetDirectories(playlistsDir))
             {
                 if (File.Exists(Path.Combine(dir, "musicFolderPath.txt")))
                 {
                     string playlistPath = File.ReadAllText(Path.Combine(dir, "musicFolderPath.txt"));
+                    this.track_list.Items.Add(playlistPath);
                     if (Path.GetFileName(dir) == currentPlayListNr)
                     {
-                        playlistPath = "NOW - " + playlistPath;
+                        track_list.SelectedIndex = i;
                     }
-                    this.track_list.Items.Add(playlistPath);
+                    i++;
                 }
             }
         }
