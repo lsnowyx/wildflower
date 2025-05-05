@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            p_bar = new ProgressBar();
+            p_bar = new ColoredProgressBar();
             track_list = new ListBox();
             track_volume = new TrackBar();
             lbl_volume = new Label();
@@ -234,7 +234,7 @@
         }
 
         #endregion
-        private ProgressBar p_bar;
+        private ColoredProgressBar p_bar;
         private ListBox track_list;
         private TrackBar track_volume;
         private Label lbl_volume;
