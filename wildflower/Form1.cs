@@ -19,6 +19,19 @@ namespace wildflower
         private bool isPlaying = false;
         private int bassStream;
         private bool bassTempIsPlaying = false;
+        private bool BassTempIsPlaying { get => bassTempIsPlaying; 
+            set 
+            {
+                bassTempIsPlaying = value;
+                btn_prevTrack.Enabled = !value;
+                btn_prevTrack.Visible = !value;
+                btn_nextTrack.Enabled = !value;
+                btn_nextTrack.Visible = !value;
+                btn_shuffleTrack.Enabled = !value;
+                btn_shuffleTrack.Visible = !value;
+                btn_options.Enabled = !value;
+                btn_options.Visible = !value;
+            } }
         private int bassTempSongIndex;
 
 
@@ -27,7 +40,7 @@ namespace wildflower
         private void PlayTrack(int index, long startAt = 0)
         {
             if (paths == null || index < 0 || index >= paths.Length) return;
-            if (!bassTempIsPlaying)
+            if (!BassTempIsPlaying)
             {
                 currentIndex = index;
             }
@@ -81,7 +94,7 @@ namespace wildflower
                 {
                     btn_shuffleTrack_DoubleClick(sender, e);
                 }
-                if (bassTempIsPlaying)
+                if (BassTempIsPlaying)
                 {
                     if (isLooped)
                     {
@@ -445,7 +458,7 @@ namespace wildflower
         }
         private void TempSongIsPlaying(bool tempSongIsPlaying)
         {
-            bassTempIsPlaying = tempSongIsPlaying;
+            BassTempIsPlaying = tempSongIsPlaying;
             btn_shuffleTrack.Enabled = !tempSongIsPlaying;
             track_list.Enabled = !tempSongIsPlaying;
             track_list.Visible = !tempSongIsPlaying;
