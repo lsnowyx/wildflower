@@ -179,13 +179,12 @@
             // 
             // lbl_tempSongName
             // 
-            lbl_tempSongName.AutoSize = true;
-            lbl_tempSongName.Location = new Point(188, 30);
+            lbl_tempSongName.Location = new Point(182, 30);
             lbl_tempSongName.Margin = new Padding(2, 0, 2, 0);
             lbl_tempSongName.Name = "lbl_tempSongName";
-            lbl_tempSongName.Size = new Size(32, 15);
+            lbl_tempSongName.Size = new Size(135, 100);
             lbl_tempSongName.TabIndex = 22;
-            lbl_tempSongName.Text = "label";
+            lbl_tempSongName.Text = "tempSongName";
             lbl_tempSongName.Visible = false;
             // 
             // btn_goBack
