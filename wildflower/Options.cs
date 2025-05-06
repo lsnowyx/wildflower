@@ -19,6 +19,7 @@
         public Options()
         {
             InitializeComponent();
+            CenterToScreen();
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.Icon = new Icon("icons\\wildflowerico.ico");

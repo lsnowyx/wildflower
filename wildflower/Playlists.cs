@@ -19,6 +19,7 @@
         public Playlists(string playlistsDir, string currentPlayListNr)
         {
             InitializeComponent();
+            CenterToScreen();
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.playlistsDir = playlistsDir;
