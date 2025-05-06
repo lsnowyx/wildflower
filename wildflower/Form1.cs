@@ -276,6 +276,11 @@ namespace wildflower
                 btn_loopTrack_Click(this, EventArgs.Empty);
                 return true;
             }
+            if (keyData == Keys.Escape && BassTempIsPlaying)
+            {
+                btn_goBack_Click(this, EventArgs.Empty);
+                return true;
+            }
             return base.ProcessCmdKey(ref msg, keyData);
         }
         private void btn_open_Click(object sender, EventArgs e)
