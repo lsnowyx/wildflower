@@ -15,7 +15,18 @@ namespace wildflower
         private string playlistSaveFile => Path.Combine(basePlaylistPath, "playlist.txt");
         private string playbackStateFile => Path.Combine(basePlaylistPath, "state.txt");
         private bool isTransitioning = false;
-        private bool isLooped = false;
+        private bool isLoopedField = false;
+        private bool isLooped
+        {
+            get => isLoopedField;
+            set
+            {
+                isLoopedField = value;
+                btn_loopTrack.Image = value ?
+                    Helper.ResizeImage(Image.FromFile("icons\\iconUnLoopTrack.png"), 50, 50) :
+                    Helper.ResizeImage(Image.FromFile("icons\\iconLoopTrack.png"), 50, 50);
+            }
+        }
         private bool isPlayingField = false;
         private bool isPlaying
         {
@@ -343,9 +354,6 @@ namespace wildflower
         private void btn_loopTrack_Click(object sender, EventArgs e)
         {
             isLooped = !isLooped;
-            btn_loopTrack.Image = isLooped ?
-                Helper.ResizeImage(Image.FromFile("icons\\iconUnLoopTrack.png"), 50, 50) :
-                Helper.ResizeImage(Image.FromFile("icons\\iconLoopTrack.png"), 50, 50);
         }
         private void btn_shuffleTrack_DoubleClick(object sender, EventArgs e)
         {
