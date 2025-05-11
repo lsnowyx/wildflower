@@ -3,8 +3,8 @@
     public partial class Search : Form
     {
         private string[] paths;
-        public string songToPlay;
-        public bool playBtnPressed = false;
+        public string songToPlay { get; set; }
+        public bool playBtnPressed { get; set; } = false;
         public Search(string[] paths)
         {
             InitializeComponent();
@@ -12,8 +12,8 @@
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.Icon = new Icon("icons\\wildflowerico.ico");
-            btn_searchTrack.Image = ResizeImage(Image.FromFile("icons\\iconFindTrack.png"), 50, 50);
-            btn_Play.Image = ResizeImage(Image.FromFile("icons\\iconPlayButton.png"), 50, 50);
+            btn_searchTrack.Image = Helper.ResizeImage(Image.FromFile("icons\\iconFindTrack.png"), 50, 50);
+            btn_Play.Image = Helper.ResizeImage(Image.FromFile("icons\\iconPlayButton.png"), 50, 50);
             this.paths = paths;
         }
         private void btn_searchTrack_Click(object sender, EventArgs e)
@@ -29,16 +29,6 @@
                 .IndexOf(substring, StringComparison.OrdinalIgnoreCase) >= 0)
                 .Select(f => Path.GetFileName(f)).ToList();
         }
-        private static Image ResizeImage(Image img, int width, int height)
-        {
-            Bitmap bmp = new Bitmap(width, height);
-            using (Graphics g = Graphics.FromImage(bmp))
-            {
-                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                g.DrawImage(img, 0, 0, width, height);
-            }
-            return bmp;
-        }
         private void btn_Play_Click(object sender, EventArgs e)
         {
             if (this.track_list.SelectedItem == null) return;
@@ -53,7 +43,7 @@
                 btn_searchTrack_Click(this, EventArgs.Empty);
                 return true;
             }
-            if (keyData == Keys.Space)
+            if (keyData == (Keys.Enter | Keys.Shift))
             {
                 btn_Play_Click(this, EventArgs.Empty);
                 return true;

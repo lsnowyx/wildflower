@@ -5,17 +5,7 @@
         private int deleteClickCounter = 0;
         private string playlistsDir;
         private string currentPlayListNr;
-        public string Playlist2Play = "-1";
-        private static Image ResizeImage(Image img, int width, int height)
-        {
-            Bitmap bmp = new Bitmap(width, height);
-            using (Graphics g = Graphics.FromImage(bmp))
-            {
-                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                g.DrawImage(img, 0, 0, width, height);
-            }
-            return bmp;
-        }
+        public string Playlist2Play { get; set; }
         public Playlists(string playlistsDir, string currentPlayListNr)
         {
             InitializeComponent();
@@ -25,8 +15,8 @@
             this.playlistsDir = playlistsDir;
             this.currentPlayListNr = currentPlayListNr;
             Playlist2Play = currentPlayListNr;
-            btn_PlayPlaylist.Image = ResizeImage(Image.FromFile("icons\\iconPlayButton.png"), 50, 50);
-            btn_delPlaylist.Image = ResizeImage(Image.FromFile("icons\\iconDeletePlaylist.png"), 50, 50);
+            btn_PlayPlaylist.Image = Helper.ResizeImage(Image.FromFile("icons\\iconPlayButton.png"), 50, 50);
+            btn_delPlaylist.Image = Helper.ResizeImage(Image.FromFile("icons\\iconDeletePlaylist.png"), 50, 50);
         }
         private void btn_PlayPlaylist_Click(object sender, EventArgs e)
         {
@@ -119,7 +109,7 @@
         }
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            if (keyData == Keys.Space)
+            if (keyData == Keys.Enter)
             {
                 btn_PlayPlaylist_Click(this, EventArgs.Empty);
                 return true;

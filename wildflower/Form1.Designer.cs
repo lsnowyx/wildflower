@@ -77,7 +77,7 @@
             track_list.Name = "track_list";
             track_list.Size = new Size(173, 165);
             track_list.TabIndex = 7;
-            track_list.MouseDown += track_list_MouseDown;
+            track_list.MouseDoubleClick += track_list_MouseDoubleClick;
             // 
             // track_volume
             // 
@@ -176,6 +176,10 @@
             btn_options.TabIndex = 21;
             btn_options.TabStop = false;
             btn_options.Click += btn_options_Click;
+            // 
+            // stateTimer
+            // 
+            stateTimer.Interval = 30000;
             // 
             // lbl_tempSongName
             // 

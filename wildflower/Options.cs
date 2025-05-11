@@ -2,20 +2,10 @@
 {
     public partial class Options : Form
     {
-        public bool openBtnPressed = false;
-        public bool updateBtnPressed = false;
-        public bool searchBtnPressed = false;
-        public bool playlistBtnPressed = false;
-        private static Image ResizeImage(Image img, int width, int height)
-        {
-            Bitmap bmp = new Bitmap(width, height);
-            using (Graphics g = Graphics.FromImage(bmp))
-            {
-                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                g.DrawImage(img, 0, 0, width, height);
-            }
-            return bmp;
-        }
+        public bool openBtnPressed { get; set; } = false;
+        public bool updateBtnPressed { get; set; } = false;
+        public bool searchBtnPressed { get; set; } = false;
+        public bool playlistBtnPressed { get; set; } = false;
         public Options()
         {
             InitializeComponent();
@@ -23,10 +13,10 @@
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.Icon = new Icon("icons\\wildflowerico.ico");
-            btn_open.Image = ResizeImage(Image.FromFile("icons\\iconOpenFolder.png"), 50, 50);
-            btn_update.Image = ResizeImage(Image.FromFile("icons\\iconUpdatePlaylist.png"), 50, 50);
-            btn_searchTrack.Image = ResizeImage(Image.FromFile("icons\\iconSpecificTrack.png"), 50, 50);
-            btn_selectPlaylist.Image = ResizeImage(Image.FromFile("icons\\iconSelectPlaylist.png"), 50, 50);
+            btn_open.Image = Helper.ResizeImage(Image.FromFile("icons\\iconOpenFolder.png"), 50, 50);
+            btn_update.Image = Helper.ResizeImage(Image.FromFile("icons\\iconUpdatePlaylist.png"), 50, 50);
+            btn_searchTrack.Image = Helper.ResizeImage(Image.FromFile("icons\\iconSpecificTrack.png"), 50, 50);
+            btn_selectPlaylist.Image = Helper.ResizeImage(Image.FromFile("icons\\iconSelectPlaylist.png"), 50, 50);
         }
         private void btn_open_Click(object sender, EventArgs e)
         {
