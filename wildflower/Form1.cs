@@ -257,7 +257,8 @@ namespace wildflower
             hoverTimeLabel.Text = timeStr;
             hoverTimeLabel.Location = p_bar.PointToScreen(e.Location);
             hoverTimeLabel.Location = this.PointToClient(hoverTimeLabel.Location);
-            hoverTimeLabel.Top -= 25;
+            hoverTimeLabel.Top -= 22;
+            if (hoverMs > p_bar.Maximum * 0.9) hoverTimeLabel.Left -= 42;
             hoverTimeLabel.Visible = true;
             hoverTimeLabel.BringToFront();
         }
