@@ -392,6 +392,9 @@ namespace wildflower
                 btn_play_pause_Click(sender, e);
             }
             Options f2 = new Options();
+            f2.StartPosition = FormStartPosition.Manual;
+            f2.Location = this.Location;
+            f2.Left += this.Width;
             f2.ShowDialog();
             if (f2.openBtnPressed)
             {
@@ -430,6 +433,9 @@ namespace wildflower
         private void PlayListButtonPressed()
         {
             Playlists f2 = new Playlists(playlistsDir, Path.GetFileName(basePlaylistPath));
+            f2.StartPosition = FormStartPosition.Manual;
+            f2.Location = this.Location;
+            f2.Left += this.Width;
             f2.ShowDialog();
             basePlaylistPath = Path.Combine(playlistsDir, f2.Playlist2Play);
             if (Path.GetFileName(basePlaylistPath) == f2.Playlist2Play) return;
@@ -453,6 +459,9 @@ namespace wildflower
                 return;
             }
             Search f2 = new Search(paths);
+            f2.StartPosition = FormStartPosition.Manual;
+            f2.Location = this.Location;
+            f2.Left += this.Width;
             f2.ShowDialog();
             if (f2.playBtnPressed && (f2.songToPlay != null || f2.songToPlay != string.Empty))
             {
