@@ -10,8 +10,20 @@
 
   <ItemGroup>
     <Reference Include="Bass.Net">
-      <HintPath>bin\Debug\net8.0-windows\Bass.Net.dll</HintPath>
+      <HintPath>lib\Bass.Net.dll</HintPath>
+      <Private>true</Private>
     </Reference>
+
+    <None Include="lib\bass.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>bass.dll</TargetPath>
+    </None>
   </ItemGroup>
+  
+  <ItemGroup>
+  <Content Include="icons\**\*.*">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </Content>
+</ItemGroup>
 
 </Project>

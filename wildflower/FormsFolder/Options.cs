@@ -2,16 +2,14 @@
 {
     public partial class Options : Form
     {
-        public bool openBtnPressed { get; set; } = false;
-        public bool updateBtnPressed { get; set; } = false;
-        public bool searchBtnPressed { get; set; } = false;
-        public bool playlistBtnPressed { get; set; } = false;
+        public event EventHandler OpenPressed;
+        public event EventHandler UpdatePressed;
+        public event EventHandler SearchPressed;
+        public event EventHandler PlaylistPressed;
+        public event EventHandler CloseRequest;
         public Options()
         {
             InitializeComponent();
-            this.FormBorderStyle = FormBorderStyle.FixedSingle;
-            this.MaximizeBox = false;
-            this.Icon = new Icon("icons\\wildflowerico.ico");
             btn_open.Image = Helper.ResizeImage(Image.FromFile("icons\\iconOpenFolder.png"), 50, 50);
             btn_update.Image = Helper.ResizeImage(Image.FromFile("icons\\iconUpdatePlaylist.png"), 50, 50);
             btn_searchTrack.Image = Helper.ResizeImage(Image.FromFile("icons\\iconSpecificTrack.png"), 50, 50);
@@ -19,33 +17,34 @@
         }
         private void btn_open_Click(object sender, EventArgs e)
         {
-            openBtnPressed = true;
+            OpenPressed?.Invoke(this, EventArgs.Empty);
             this.Close();
         }
         private void btn_update_Click(object sender, EventArgs e)
         {
-            updateBtnPressed = true;
+            UpdatePressed?.Invoke(this, EventArgs.Empty);
             this.Close();
         }
         private void btn_searchTrack_Click(object sender, EventArgs e)
         {
-            searchBtnPressed = true;
+            SearchPressed?.Invoke(this, EventArgs.Empty);
             this.Close();
         }
         private void btn_selectPlaylist_Click(object sender, EventArgs e)
         {
-            playlistBtnPressed = true;
+            PlaylistPressed?.Invoke(this, EventArgs.Empty);
             this.Close();
         }
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
             if (keyData == Keys.Escape)
             {
+                CloseRequest?.Invoke(this, EventArgs.Empty);
                 this.Close();
                 return true;
             }
             return base.ProcessCmdKey(ref msg, keyData);
         }
-
+        private void Options_Load(object sender, EventArgs e) => btn_update.Focus();
     }
 }

@@ -45,6 +45,7 @@
             stateTimer = new System.Windows.Forms.Timer(components);
             lbl_tempSongName = new Label();
             btn_goBack = new PictureBox();
+            mainPanel = new Panel();
             ((System.ComponentModel.ISupportInitialize)track_volume).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_play_pause).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_nextTrack).BeginInit();
@@ -200,12 +201,20 @@
             btn_goBack.TabStop = false;
             btn_goBack.Click += btn_goBack_Click;
             // 
+            // mainPanel
+            // 
+            mainPanel.Location = new Point(244, 127);
+            mainPanel.Name = "mainPanel";
+            mainPanel.Size = new Size(80, 50);
+            mainPanel.TabIndex = 24;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.Black;
             ClientSize = new Size(370, 208);
+            Controls.Add(mainPanel);
             Controls.Add(btn_goBack);
             Controls.Add(lbl_tempSongName);
             Controls.Add(btn_options);
@@ -224,6 +233,7 @@
             Name = "Form1";
             Text = "wildflower";
             Load += Form1_Load;
+            Click += Form1_Click;
             ((System.ComponentModel.ISupportInitialize)track_volume).EndInit();
             ((System.ComponentModel.ISupportInitialize)btn_play_pause).EndInit();
             ((System.ComponentModel.ISupportInitialize)btn_nextTrack).EndInit();
@@ -253,5 +263,6 @@
         private System.Windows.Forms.Timer stateTimer;
         private Label lbl_tempSongName;
         private PictureBox btn_goBack;
+        private Panel mainPanel;
     }
 }
