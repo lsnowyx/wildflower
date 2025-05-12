@@ -3,8 +3,8 @@
     public partial class Search : Form
     {
         private string[] paths;
-        public string songToPlay { get; set; }
-        public bool playBtnPressed { get; set; } = false;
+        public event EventHandler<string> SongToPlay;
+        public event EventHandler CloseRequest;
         public Search(string[] paths)
         {
             InitializeComponent();
@@ -31,8 +31,8 @@
         private void btn_Play_Click(object sender, EventArgs e)
         {
             if (this.track_list.SelectedItem == null) return;
-            songToPlay = track_list.SelectedItem.ToString();
-            playBtnPressed = true;
+            SongToPlay?.Invoke(this, track_list.SelectedItem.ToString());
+            CloseRequest?.Invoke(this, EventArgs.Empty);
             this.Close();
         }
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
@@ -49,6 +49,7 @@
             }
             if (keyData == Keys.Escape)
             {
+                CloseRequest?.Invoke(this, EventArgs.Empty);
                 this.Close();
                 return true;
             }

@@ -5,7 +5,8 @@
         private int deleteClickCounter = 0;
         private string playlistsDir;
         private string currentPlayListNr;
-        public string Playlist2Play { get; set; }
+        public event EventHandler<string> Playlist2Play;
+        public event EventHandler CloseRequest;
         public Playlists(string playlistsDir, string currentPlayListNr)
         {
             InitializeComponent();
@@ -13,7 +14,6 @@
             this.MaximizeBox = false;
             this.playlistsDir = playlistsDir;
             this.currentPlayListNr = currentPlayListNr;
-            Playlist2Play = currentPlayListNr;
             this.Icon = new Icon("icons\\wildflowerico.ico");
             btn_PlayPlaylist.Image = Helper.ResizeImage(Image.FromFile("icons\\iconPlayButton.png"), 50, 50);
             btn_delPlaylist.Image = Helper.ResizeImage(Image.FromFile("icons\\iconDeletePlaylist.png"), 50, 50);
@@ -33,7 +33,8 @@
                     string existingPath = File.ReadAllText(existingPathFile);
                     if (string.Equals(existingPath, musicFolder, StringComparison.OrdinalIgnoreCase))
                     {
-                        Playlist2Play = Path.GetFileName(dir);
+                        Playlist2Play?.Invoke(this, Path.GetFileName(dir));
+                        CloseRequest?.Invoke(this, EventArgs.Empty);
                         this.Close();
                     }
                 }
@@ -75,15 +76,16 @@
                     string existingPath = File.ReadAllText(existingPathFile);
                     if (string.Equals(existingPath, musicFolder, StringComparison.OrdinalIgnoreCase))
                     {
-                        if (Path.GetFileName(dir) == currentPlayListNr)
-                        {
-                            Playlist2Play = "-1";
-                        }
                         Directory.Delete(dir, recursive: true);
                         track_list.Items.Remove(track_list.SelectedItem);
                         if (track_list.Items.Count == 0)
                         {
+                            CloseRequest?.Invoke(this, EventArgs.Empty);
                             this.Close();
+                        }
+                        if (Path.GetFileName(dir) == currentPlayListNr)
+                        {
+                            Playlist2Play?.Invoke(this, "-1");
                         }
                     }
                 }
@@ -116,6 +118,7 @@
             }
             if (keyData == Keys.Escape)
             {
+                CloseRequest?.Invoke(this, EventArgs.Empty);
                 this.Close();
                 return true;
             }

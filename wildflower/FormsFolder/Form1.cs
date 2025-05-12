@@ -9,10 +9,10 @@ namespace wildflower
         private short shuffleClickCounter = 0;
         private long resumeTimeMs = -1;
         private string musicFolder;
-        private string playlistsDir = 
+        private string playlistsDir =
             Path.Combine(
                 Environment.GetFolderPath
-                (Environment.SpecialFolder.ApplicationData),".wildflower", "playlists");
+                (Environment.SpecialFolder.ApplicationData), ".wildflower", "playlists");
         private string basePlaylistPath;
         private string musicFolderPath => Path.Combine(basePlaylistPath, "musicFolderPath.txt");
         private string playlistSaveFile => Path.Combine(basePlaylistPath, "playlist.txt");
@@ -164,6 +164,8 @@ namespace wildflower
             lbl_volume.Text = "30%";
             track_volume.Value = 30;
 
+            PanelEnabledVisible(false);
+
             btn_goBack.Enabled = false;
             btn_goBack.Visible = false;
 
@@ -285,6 +287,8 @@ namespace wildflower
         }
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
+            if (mainPanel.Enabled && mainPanel.Visible)
+                return base.ProcessCmdKey(ref msg, keyData);
             if (keyData == Keys.Space)
             {
                 btn_play_pause_Click(this, EventArgs.Empty);
@@ -400,70 +404,83 @@ namespace wildflower
             {
                 btn_play_pause_Click(sender, e);
             }
+
             Options f2 = new Options();
-            f2.StartPosition = FormStartPosition.Manual;
-            f2.Location = this.Location;
-            f2.Left += this.Width;
-            f2.ShowDialog();
-            if (f2.openBtnPressed)
+
+            f2.OpenPressed += (s, args) =>
             {
-                btn_open_Click(sender, e);
-            }
-            if (f2.updateBtnPressed)
+                btn_open_Click(sender, EventArgs.Empty);
+                PanelEnabledVisible(false);
+            };
+
+            f2.UpdatePressed += (s, args) =>
             {
                 if (paths == null || paths.Length == 0)
                 {
                     MessageBox.Show("Nowhere to update from");
                     return;
                 }
+                PanelEnabledVisible(false);
                 RefreshPlaylist();
                 SavePlaybackState();
                 PlayTrack(currentIndex, resumeTimeMs);
-                return;
-            }
-            if (f2.searchBtnPressed)
+            };
+
+            f2.SearchPressed += (s, args) =>
             {
                 if (isPlaying)
                 {
-                    btn_play_pause_Click(sender, e);
+                    btn_play_pause_Click(sender, EventArgs.Empty);
                 }
+                PanelEnabledVisible(false);
                 SearchButtonPressed();
-                return;
-            }
-            if (f2.playlistBtnPressed)
+            };
+
+            f2.PlaylistPressed += (s, args) =>
             {
                 if (isPlaying)
                 {
-                    btn_play_pause_Click(sender, e);
+                    btn_play_pause_Click(sender, EventArgs.Empty);
                 }
                 if (paths == null || paths.Length == 0)
                 {
                     MessageBox.Show("Nowhere to play from");
                     return;
                 }
+                PanelEnabledVisible(false);
                 PlayListButtonPressed();
-            }
+            };
+            f2.CloseRequest += (e, args) =>
+            {
+                PanelEnabledVisible(false);
+            };
+            LoadFormIntoPanel(f2);
         }
         private void PlayListButtonPressed()
         {
             Playlists f2 = new Playlists(playlistsDir, Path.GetFileName(basePlaylistPath));
-            f2.StartPosition = FormStartPosition.Manual;
-            f2.Location = this.Location;
-            f2.Left += this.Width;
-            f2.ShowDialog();
-            if (Path.GetFileName(basePlaylistPath) == f2.Playlist2Play) return;
-            basePlaylistPath = Path.Combine(playlistsDir, f2.Playlist2Play);
-            if (!File.Exists(basePlaylistPath + "\\musicFolderPath.txt"))
+            f2.Playlist2Play += (e, Playlist2Play) =>
             {
-                if (!FindAvailablePlaylist())
+                if (Path.GetFileName(basePlaylistPath) == Playlist2Play) return;
+                basePlaylistPath = Path.Combine(playlistsDir, Playlist2Play);
+                if (!File.Exists(basePlaylistPath + "\\musicFolderPath.txt"))
                 {
-                    MessageBox.Show("All playlists have been deleted");
-                    paths = null;
-                    track_list.Items.Clear();
+                    if (!FindAvailablePlaylist())
+                    {
+                        MessageBox.Show("All playlists have been deleted");
+                        paths = null;
+                        track_list.Items.Clear();
+                    }
                 }
-            }
-            Form1_Load(this, EventArgs.Empty);
-            File.WriteAllText(Path.Combine(playlistsDir, "lastUsed.txt"), f2.Playlist2Play);
+                Form1_Load(this, EventArgs.Empty);
+                File.WriteAllText(Path.Combine(playlistsDir, "lastUsed.txt"), Playlist2Play);
+                PanelEnabledVisible(false);
+            };
+            f2.CloseRequest += (e, args) =>
+            {
+                PanelEnabledVisible(false);
+            };
+            LoadFormIntoPanel(f2);
         }
         private void SearchButtonPressed()
         {
@@ -473,16 +490,18 @@ namespace wildflower
                 return;
             }
             Search f2 = new Search(paths);
-            f2.StartPosition = FormStartPosition.Manual;
-            f2.Location = this.Location;
-            f2.Left += this.Width;
-            f2.ShowDialog();
-            if (f2.playBtnPressed && (f2.songToPlay != null || f2.songToPlay != string.Empty))
+            f2.SongToPlay += (e, songToPlay) =>
             {
-                if (paths == null || f2.songToPlay == null) return;
-                bassTempSongIndex = Array.FindIndex(paths, f => f.Contains(f2.songToPlay));
+                if (paths == null || songToPlay == null) return;
+                bassTempSongIndex = Array.FindIndex(paths, f => f.Contains(songToPlay));
                 BassTempIsPlaying = true;
-            }
+                PanelEnabledVisible(false);
+            };
+            f2.CloseRequest += (e, args) =>
+            {
+                PanelEnabledVisible(false);
+            };
+            LoadFormIntoPanel(f2);
         }
         private void TempSongIsPlaying(bool tempSongIsPlaying)
         {
@@ -720,6 +739,44 @@ namespace wildflower
                         }
                     }
                 }
+            }
+        }
+        private void LoadFormIntoPanel(Form childForm)
+        {
+            if (mainPanel.Controls.Count > 0)
+                mainPanel.Controls[0].Dispose();
+
+            childForm.TopLevel = false;
+            childForm.FormBorderStyle = FormBorderStyle.None;
+            childForm.Dock = DockStyle.Fill;
+            mainPanel.Location = new Point(0, 0);
+            mainPanel.Size = childForm.Size;
+
+            mainPanel.Controls.Add(childForm);
+            mainPanel.Tag = childForm;
+            PanelEnabledVisible(true);
+
+            childForm.Show();
+            childForm.Select();
+        }
+        private void PanelEnabledVisible(bool value)
+        {
+            mainPanel.Visible = value;
+            mainPanel.Enabled = value;
+            foreach (Control ctrl in this.Controls)
+            {
+                if (ctrl == mainPanel || ctrl == this)
+                {
+                    continue;
+                }
+                ctrl.Enabled = !value;
+            }
+        }
+        private void Form1_Click(object sender, EventArgs e)
+        {
+            if (mainPanel.Visible && mainPanel.Enabled)
+            {
+                PanelEnabledVisible(false);
             }
         }
     }
