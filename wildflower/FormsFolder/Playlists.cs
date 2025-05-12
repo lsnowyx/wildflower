@@ -10,11 +10,8 @@
         public Playlists(string playlistsDir, string currentPlayListNr)
         {
             InitializeComponent();
-            this.FormBorderStyle = FormBorderStyle.FixedSingle;
-            this.MaximizeBox = false;
             this.playlistsDir = playlistsDir;
             this.currentPlayListNr = currentPlayListNr;
-            this.Icon = new Icon("icons\\wildflowerico.ico");
             btn_PlayPlaylist.Image = Helper.ResizeImage(Image.FromFile("icons\\iconPlayButton.png"), 50, 50);
             btn_delPlaylist.Image = Helper.ResizeImage(Image.FromFile("icons\\iconDeletePlaylist.png"), 50, 50);
         }
@@ -108,6 +105,7 @@
                     i++;
                 }
             }
+            track_list.Focus();
         }
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {

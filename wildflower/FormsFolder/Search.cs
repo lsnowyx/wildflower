@@ -8,9 +8,6 @@
         public Search(string[] paths)
         {
             InitializeComponent();
-            this.FormBorderStyle = FormBorderStyle.FixedSingle;
-            this.MaximizeBox = false;
-            this.Icon = new Icon("icons\\wildflowerico.ico");
             btn_searchTrack.Image = Helper.ResizeImage(Image.FromFile("icons\\iconFindTrack.png"), 50, 50);
             btn_Play.Image = Helper.ResizeImage(Image.FromFile("icons\\iconPlayButton.png"), 50, 50);
             this.paths = paths;
@@ -55,5 +52,6 @@
             }
             return base.ProcessCmdKey(ref msg, keyData);
         }
+        private void Search_Load(object sender, EventArgs e) => txbx_search.Focus();
     }
 }

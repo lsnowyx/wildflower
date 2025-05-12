@@ -86,6 +86,7 @@
             Controls.Add(btn_open);
             Name = "Options";
             Text = "Options";
+            Load += Options_Load;
             ((System.ComponentModel.ISupportInitialize)btn_open).EndInit();
             ((System.ComponentModel.ISupportInitialize)btn_update).EndInit();
             ((System.ComponentModel.ISupportInitialize)btn_searchTrack).EndInit();

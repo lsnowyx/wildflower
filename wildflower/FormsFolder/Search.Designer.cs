@@ -38,17 +38,17 @@
             // 
             // txbx_search
             // 
-            txbx_search.Location = new Point(12, 28);
+            txbx_search.Location = new Point(6, 13);
+            txbx_search.Margin = new Padding(2, 1, 2, 1);
             txbx_search.Name = "txbx_search";
-            txbx_search.Size = new Size(200, 39);
+            txbx_search.Size = new Size(110, 23);
             txbx_search.TabIndex = 0;
             // 
             // btn_searchTrack
             // 
-            btn_searchTrack.Location = new Point(15, 90);
-            btn_searchTrack.Margin = new Padding(6);
+            btn_searchTrack.Location = new Point(8, 42);
             btn_searchTrack.Name = "btn_searchTrack";
-            btn_searchTrack.Size = new Size(93, 107);
+            btn_searchTrack.Size = new Size(50, 50);
             btn_searchTrack.TabIndex = 18;
             btn_searchTrack.TabStop = false;
             btn_searchTrack.Click += btn_searchTrack_Click;
@@ -59,34 +59,35 @@
             track_list.BorderStyle = BorderStyle.None;
             track_list.ForeColor = Color.White;
             track_list.FormattingEnabled = true;
-            track_list.Location = new Point(231, 37);
-            track_list.Margin = new Padding(6);
+            track_list.ItemHeight = 15;
+            track_list.Location = new Point(124, 17);
             track_list.Name = "track_list";
-            track_list.Size = new Size(321, 160);
+            track_list.Size = new Size(173, 75);
             track_list.TabIndex = 19;
             // 
             // btn_Play
             // 
-            btn_Play.Location = new Point(119, 90);
-            btn_Play.Margin = new Padding(6);
+            btn_Play.Location = new Point(64, 42);
             btn_Play.Name = "btn_Play";
-            btn_Play.Size = new Size(93, 107);
+            btn_Play.Size = new Size(50, 50);
             btn_Play.TabIndex = 20;
             btn_Play.TabStop = false;
             btn_Play.Click += btn_Play_Click;
             // 
             // Search
             // 
-            AutoScaleDimensions = new SizeF(13F, 32F);
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.Black;
-            ClientSize = new Size(600, 238);
+            ClientSize = new Size(323, 112);
             Controls.Add(btn_Play);
             Controls.Add(track_list);
             Controls.Add(btn_searchTrack);
             Controls.Add(txbx_search);
+            Margin = new Padding(2, 1, 2, 1);
             Name = "Search";
             Text = "Search";
+            Load += Search_Load;
             ((System.ComponentModel.ISupportInitialize)btn_searchTrack).EndInit();
             ((System.ComponentModel.ISupportInitialize)btn_Play).EndInit();
             ResumeLayout(false);

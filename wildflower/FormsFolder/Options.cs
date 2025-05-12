@@ -10,9 +10,6 @@
         public Options()
         {
             InitializeComponent();
-            this.FormBorderStyle = FormBorderStyle.FixedSingle;
-            this.MaximizeBox = false;
-            this.Icon = new Icon("icons\\wildflowerico.ico");
             btn_open.Image = Helper.ResizeImage(Image.FromFile("icons\\iconOpenFolder.png"), 50, 50);
             btn_update.Image = Helper.ResizeImage(Image.FromFile("icons\\iconUpdatePlaylist.png"), 50, 50);
             btn_searchTrack.Image = Helper.ResizeImage(Image.FromFile("icons\\iconSpecificTrack.png"), 50, 50);
@@ -48,6 +45,6 @@
             }
             return base.ProcessCmdKey(ref msg, keyData);
         }
-
+        private void Options_Load(object sender, EventArgs e) => btn_update.Focus();
     }
 }
