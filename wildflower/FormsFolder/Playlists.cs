@@ -14,6 +14,7 @@
             this.playlistsDir = playlistsDir;
             this.currentPlayListNr = currentPlayListNr;
             Playlist2Play = currentPlayListNr;
+            this.Icon = new Icon("icons\\wildflowerico.ico");
             btn_PlayPlaylist.Image = Helper.ResizeImage(Image.FromFile("icons\\iconPlayButton.png"), 50, 50);
             btn_delPlaylist.Image = Helper.ResizeImage(Image.FromFile("icons\\iconDeletePlaylist.png"), 50, 50);
         }
@@ -76,7 +77,7 @@
                     {
                         if (Path.GetFileName(dir) == currentPlayListNr)
                         {
-                            Playlist2Play = "0";
+                            Playlist2Play = "-1";
                         }
                         Directory.Delete(dir, recursive: true);
                         track_list.Items.Remove(track_list.SelectedItem);

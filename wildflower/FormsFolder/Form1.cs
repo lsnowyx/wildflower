@@ -9,7 +9,10 @@ namespace wildflower
         private short shuffleClickCounter = 0;
         private long resumeTimeMs = -1;
         private string musicFolder;
-        private string playlistsDir = "playlists";
+        private string playlistsDir = 
+            Path.Combine(
+                Environment.GetFolderPath
+                (Environment.SpecialFolder.ApplicationData),".wildflower", "playlists");
         private string basePlaylistPath;
         private string musicFolderPath => Path.Combine(basePlaylistPath, "musicFolderPath.txt");
         private string playlistSaveFile => Path.Combine(basePlaylistPath, "playlist.txt");
@@ -302,7 +305,13 @@ namespace wildflower
         private void btn_open_Click(object sender, EventArgs e)
         {
             FolderBrowserDialog fbd = new FolderBrowserDialog();
-            if (fbd.ShowDialog() == DialogResult.OK)
+            var fbdShowDialog = fbd.ShowDialog();
+            if (fbdShowDialog != DialogResult.OK && basePlaylistPath == null)
+            {
+                btn_open_Click(sender, e);
+                return;
+            }
+            if (fbdShowDialog == DialogResult.OK)
             {
                 musicFolder = fbd.SelectedPath;
                 foreach (string dir in Directory.GetDirectories(playlistsDir))
@@ -427,6 +436,11 @@ namespace wildflower
                 {
                     btn_play_pause_Click(sender, e);
                 }
+                if (paths == null || paths.Length == 0)
+                {
+                    MessageBox.Show("Nowhere to play from");
+                    return;
+                }
                 PlayListButtonPressed();
             }
         }
@@ -437,8 +451,8 @@ namespace wildflower
             f2.Location = this.Location;
             f2.Left += this.Width;
             f2.ShowDialog();
-            basePlaylistPath = Path.Combine(playlistsDir, f2.Playlist2Play);
             if (Path.GetFileName(basePlaylistPath) == f2.Playlist2Play) return;
+            basePlaylistPath = Path.Combine(playlistsDir, f2.Playlist2Play);
             if (!File.Exists(basePlaylistPath + "\\musicFolderPath.txt"))
             {
                 if (!FindAvailablePlaylist())
@@ -449,7 +463,7 @@ namespace wildflower
                 }
             }
             Form1_Load(this, EventArgs.Empty);
-            File.WriteAllText("playlists\\lastUsed.txt", f2.Playlist2Play);
+            File.WriteAllText(Path.Combine(playlistsDir, "lastUsed.txt"), f2.Playlist2Play);
         }
         private void SearchButtonPressed()
         {
@@ -679,7 +693,7 @@ namespace wildflower
                 if (File.Exists(existingPathFile))
                 {
                     basePlaylistPath = dir;
-                    File.WriteAllText("playlists\\lastUsed.txt", Path.GetFileName(dir));
+                    File.WriteAllText(Path.Combine(playlistsDir, "lastUsed.txt"), Path.GetFileName(dir));
                     return true;
                 }
             }
