@@ -10,10 +10,10 @@
         public Options()
         {
             InitializeComponent();
-            btn_open.Image = Helper.ResizeImage(Image.FromFile("icons\\iconOpenFolder.png"), 50, 50);
-            btn_update.Image = Helper.ResizeImage(Image.FromFile("icons\\iconUpdatePlaylist.png"), 50, 50);
-            btn_searchTrack.Image = Helper.ResizeImage(Image.FromFile("icons\\iconSpecificTrack.png"), 50, 50);
-            btn_selectPlaylist.Image = Helper.ResizeImage(Image.FromFile("icons\\iconSelectPlaylist.png"), 50, 50);
+            btn_open.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconOpenFolder.png"), 50, 50);
+            btn_update.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconUpdatePlaylist.png"), 50, 50);
+            btn_searchTrack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconSpecificTrack.png"), 50, 50);
+            btn_selectPlaylist.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconSelectPlaylist.png"), 50, 50);
         }
         private void btn_open_Click(object sender, EventArgs e)
         {

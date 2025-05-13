@@ -26,8 +26,8 @@ namespace wildflower
             {
                 isLoopedField = value;
                 btn_loopTrack.Image = value ?
-                    Helper.ResizeImage(Image.FromFile("icons\\iconUnLoopTrack.png"), 50, 50) :
-                    Helper.ResizeImage(Image.FromFile("icons\\iconLoopTrack.png"), 50, 50);
+                    Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconUnLoopTrack.png"), 50, 50) :
+                    Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconLoopTrack.png"), 50, 50);
             }
         }
         private bool isPlayingField = false;
@@ -38,8 +38,8 @@ namespace wildflower
             {
                 isPlayingField = value;
                 btn_play_pause.Image = value ?
-                    Helper.ResizeImage(Image.FromFile("icons\\iconPauseButton.png"), 50, 50) :
-                    Helper.ResizeImage(Image.FromFile("icons\\iconPlayButton.png"), 50, 50);
+                    Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconPauseButton.png"), 50, 50) :
+                    Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconPlayButton.png"), 50, 50);
             }
         }
         private int bassStream;
@@ -182,16 +182,14 @@ namespace wildflower
             #endregion
 
             #region iconsInit
-            //this.Icon = new Icon("icons\\wildflowerico.ico");
-            string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "icons", "wildflowerico.ico");
-            this.Icon = new Icon(iconPath);
-            btn_play_pause.Image = Helper.ResizeImage(Image.FromFile("icons\\iconPlayButton.png"), 50, 50);
-            btn_prevTrack.Image = Helper.ResizeImage(Image.FromFile("icons\\iconPreviousTrack.png"), 50, 50);
-            btn_nextTrack.Image = Helper.ResizeImage(Image.FromFile("icons\\iconNextTrack.png"), 50, 50);
-            btn_loopTrack.Image = Helper.ResizeImage(Image.FromFile("icons\\iconLoopTrack.png"), 50, 50);
-            btn_shuffleTrack.Image = Helper.ResizeImage(Image.FromFile("icons\\iconShuffleTrack.png"), 50, 50);
-            btn_options.Image = Helper.ResizeImage(Image.FromFile("icons\\iconMoreOptions.png"), 50, 50);
-            btn_goBack.Image = Helper.ResizeImage(Image.FromFile("icons\\iconGoBack.png"), 50, 50);
+            this.Icon = new Icon(Helper.IconsPath + "wildflowerico.ico");
+            btn_play_pause.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconPlayButton.png"), 50, 50);
+            btn_prevTrack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconPreviousTrack.png"), 50, 50);
+            btn_nextTrack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconNextTrack.png"), 50, 50);
+            btn_loopTrack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconLoopTrack.png"), 50, 50);
+            btn_shuffleTrack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconShuffleTrack.png"), 50, 50);
+            btn_options.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconMoreOptions.png"), 50, 50);
+            btn_goBack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconGoBack.png"), 50, 50);
             #endregion
 
             Bass.BASS_Init(-1, 44100, BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero);

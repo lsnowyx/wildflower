@@ -8,8 +8,8 @@
         public Search(string[] paths)
         {
             InitializeComponent();
-            btn_searchTrack.Image = Helper.ResizeImage(Image.FromFile("icons\\iconFindTrack.png"), 50, 50);
-            btn_Play.Image = Helper.ResizeImage(Image.FromFile("icons\\iconPlayButton.png"), 50, 50);
+            btn_searchTrack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconFindTrack.png"), 50, 50);
+            btn_Play.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconPlayButton.png"), 50, 50);
             this.paths = paths;
         }
         private void btn_searchTrack_Click(object sender, EventArgs e)

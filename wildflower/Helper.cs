@@ -2,6 +2,7 @@
 {
     public static class Helper
     {
+        public static string IconsPath { get; set; } = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "icons\\");
         public static Image ResizeImage(Image img, int width, int height)
         {
             Bitmap bmp = new Bitmap(width, height);
