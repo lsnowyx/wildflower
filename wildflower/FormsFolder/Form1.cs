@@ -164,7 +164,8 @@ namespace wildflower
             lbl_volume.Text = "30%";
             track_volume.Value = 30;
 
-            PanelEnabledVisible(false);
+            mainPanel.Visible = false;
+            mainPanel.Enabled = false;
 
             btn_goBack.Enabled = false;
             btn_goBack.Visible = false;
@@ -765,7 +766,7 @@ namespace wildflower
             mainPanel.Enabled = value;
             foreach (Control ctrl in this.Controls)
             {
-                if (ctrl == mainPanel || ctrl == this)
+                if (ctrl == mainPanel || ctrl == this || ctrl == btn_goBack)
                 {
                     continue;
                 }
