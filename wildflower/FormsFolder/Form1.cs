@@ -182,7 +182,9 @@ namespace wildflower
             #endregion
 
             #region iconsInit
-            this.Icon = new Icon("icons\\wildflowerico.ico");
+            //this.Icon = new Icon("icons\\wildflowerico.ico");
+            string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "icons", "wildflowerico.ico");
+            this.Icon = new Icon(iconPath);
             btn_play_pause.Image = Helper.ResizeImage(Image.FromFile("icons\\iconPlayButton.png"), 50, 50);
             btn_prevTrack.Image = Helper.ResizeImage(Image.FromFile("icons\\iconPreviousTrack.png"), 50, 50);
             btn_nextTrack.Image = Helper.ResizeImage(Image.FromFile("icons\\iconNextTrack.png"), 50, 50);
