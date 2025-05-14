@@ -61,7 +61,7 @@
             p_bar.Dock = DockStyle.Bottom;
             p_bar.Location = new Point(0, 185);
             p_bar.Name = "p_bar";
-            p_bar.Size = new Size(370, 23);
+            p_bar.Size = new Size(345, 23);
             p_bar.TabIndex = 6;
             p_bar.MouseDown += p_bar_MouseDown;
             p_bar.MouseLeave += p_bar_MouseLeave;
@@ -74,7 +74,7 @@
             track_list.ForeColor = Color.White;
             track_list.FormattingEnabled = true;
             track_list.ItemHeight = 15;
-            track_list.Location = new Point(188, 12);
+            track_list.Location = new Point(163, 12);
             track_list.Name = "track_list";
             track_list.Size = new Size(173, 165);
             track_list.TabIndex = 7;
@@ -125,7 +125,7 @@
             // 
             // btn_play_pause
             // 
-            btn_play_pause.Location = new Point(132, 71);
+            btn_play_pause.Location = new Point(107, 71);
             btn_play_pause.Name = "btn_play_pause";
             btn_play_pause.Size = new Size(50, 50);
             btn_play_pause.TabIndex = 15;
@@ -134,7 +134,7 @@
             // 
             // btn_nextTrack
             // 
-            btn_nextTrack.Location = new Point(132, 127);
+            btn_nextTrack.Location = new Point(107, 127);
             btn_nextTrack.Name = "btn_nextTrack";
             btn_nextTrack.Size = new Size(50, 50);
             btn_nextTrack.TabIndex = 16;
@@ -143,7 +143,7 @@
             // 
             // btn_prevTrack
             // 
-            btn_prevTrack.Location = new Point(132, 15);
+            btn_prevTrack.Location = new Point(107, 15);
             btn_prevTrack.Name = "btn_prevTrack";
             btn_prevTrack.Size = new Size(50, 50);
             btn_prevTrack.TabIndex = 17;
@@ -152,7 +152,7 @@
             // 
             // btn_loopTrack
             // 
-            btn_loopTrack.Location = new Point(76, 15);
+            btn_loopTrack.Location = new Point(51, 15);
             btn_loopTrack.Name = "btn_loopTrack";
             btn_loopTrack.Size = new Size(50, 50);
             btn_loopTrack.TabIndex = 18;
@@ -161,7 +161,7 @@
             // 
             // btn_shuffleTrack
             // 
-            btn_shuffleTrack.Location = new Point(76, 71);
+            btn_shuffleTrack.Location = new Point(51, 71);
             btn_shuffleTrack.Name = "btn_shuffleTrack";
             btn_shuffleTrack.Size = new Size(50, 50);
             btn_shuffleTrack.TabIndex = 19;
@@ -171,7 +171,7 @@
             // 
             // btn_options
             // 
-            btn_options.Location = new Point(76, 127);
+            btn_options.Location = new Point(51, 127);
             btn_options.Name = "btn_options";
             btn_options.Size = new Size(50, 50);
             btn_options.TabIndex = 21;
@@ -184,7 +184,7 @@
             // 
             // lbl_tempSongName
             // 
-            lbl_tempSongName.Location = new Point(182, 30);
+            lbl_tempSongName.Location = new Point(157, 30);
             lbl_tempSongName.Margin = new Padding(2, 0, 2, 0);
             lbl_tempSongName.Name = "lbl_tempSongName";
             lbl_tempSongName.Size = new Size(135, 100);
@@ -194,7 +194,7 @@
             // 
             // btn_goBack
             // 
-            btn_goBack.Location = new Point(244, 71);
+            btn_goBack.Location = new Point(219, 71);
             btn_goBack.Name = "btn_goBack";
             btn_goBack.Size = new Size(50, 50);
             btn_goBack.TabIndex = 23;
@@ -203,7 +203,7 @@
             // 
             // mainPanel
             // 
-            mainPanel.Location = new Point(244, 127);
+            mainPanel.Location = new Point(219, 127);
             mainPanel.Name = "mainPanel";
             mainPanel.Size = new Size(80, 50);
             mainPanel.TabIndex = 24;
@@ -213,7 +213,7 @@
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.Black;
-            ClientSize = new Size(370, 208);
+            ClientSize = new Size(345, 208);
             Controls.Add(mainPanel);
             Controls.Add(btn_goBack);
             Controls.Add(lbl_tempSongName);

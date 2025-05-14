@@ -163,6 +163,7 @@ namespace wildflower
 
             lbl_volume.Text = "30%";
             track_volume.Value = 30;
+            lbl_track_end.BringToFront();
 
             mainPanel.Visible = false;
             mainPanel.Enabled = false;
