@@ -444,11 +444,6 @@ namespace wildflower
                 {
                     btn_play_pause_Click(sender, EventArgs.Empty);
                 }
-                if (paths == null || paths.Length == 0)
-                {
-                    MessageBox.Show("Nowhere to play from");
-                    return;
-                }
                 PanelEnabledVisible(false);
                 PlayListButtonPressed();
             };
