@@ -1,4 +1,6 @@
-﻿namespace wildflower
+﻿using System.Security.Policy;
+
+namespace wildflower
 {
     public static class Helper
     {
@@ -39,6 +41,35 @@
 
             return rotatedBmp;
         }
+        public static async void AnimateSlideInFromTop(Panel panel, int steps = 10, int delayMs = 15)
+        {
+            int startY = -panel.Height;
+            int endY = 0;
+            int stepY = (endY - startY) / steps;
+            panel.Location = new Point(0, startY);
+            panel.Visible = true;
+            for (int i = 0; i <= steps; i++)
+            {
+                int y = startY + i * stepY;
+                panel.Location = new Point(0, y);
+                await Task.Delay(delayMs);
+            }
 
+            panel.Location = new Point(0, 0);
+        }
+        public static async void AnimateSlideOutToTop(Panel panel, int steps = 10, int delayMs = 15)
+        {
+            int startY = panel.Location.Y;
+            int endY = -panel.Height;
+            int stepY = (endY - startY) / steps;
+
+            for (int i = 0; i <= steps; i++)
+            {
+                int y = startY + i * stepY;
+                panel.Location = new Point(0, y);
+                await Task.Delay(delayMs);
+            }
+            panel.Visible = false;
+        }
     }
 }

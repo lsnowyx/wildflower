@@ -62,16 +62,17 @@ namespace wildflower
             {
                 if (mainPanelVisibleEnabledField == value) return;
                 mainPanelVisibleEnabledField = value;
-                mainPanel.Enabled = value;
-                mainPanel.Visible = value;
                 if (value)
                 {
                     Helper.AnimateRotation(btn_options, (Image)btn_options.Image.Clone(), 90, 10, 10);
+                    Helper.AnimateSlideInFromTop(mainPanel);
                 }
                 else
                 {
                     Helper.AnimateRotation(btn_options, (Image)btn_options.Image.Clone(), -90, 10, 10);
+                    Helper.AnimateSlideOutToTop(mainPanel);
                 }
+                mainPanel.Enabled = value;
             }
         }
 
@@ -762,7 +763,6 @@ namespace wildflower
             childForm.TopLevel = false;
             childForm.FormBorderStyle = FormBorderStyle.None;
             childForm.Dock = DockStyle.Fill;
-            mainPanel.Location = new Point(0, 0);
             mainPanel.Size = childForm.Size;
             childForm.BackColor = ColorTranslator.FromHtml("#1f1e33");
             mainPanel.Controls.Add(childForm);
