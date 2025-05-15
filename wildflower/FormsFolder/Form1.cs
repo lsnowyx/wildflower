@@ -327,6 +327,12 @@ namespace wildflower
                 btn_goBack_Click(this, EventArgs.Empty);
                 return true;
             }
+            if (keyData == Keys.Escape)
+            {
+                if (Helper.IsAnimatingButton || Helper.IsAnimatingPanel) return true;
+                btn_options_Click(this, EventArgs.Empty);
+                return true;
+            }
             return base.ProcessCmdKey(ref msg, keyData);
         }
         private void btn_open_Click(object sender, EventArgs e)

@@ -18,29 +18,25 @@
         private void btn_open_Click(object sender, EventArgs e)
         {
             OpenPressed?.Invoke(this, EventArgs.Empty);
-            this.Close();
         }
         private void btn_update_Click(object sender, EventArgs e)
         {
             UpdatePressed?.Invoke(this, EventArgs.Empty);
-            this.Close();
         }
         private void btn_searchTrack_Click(object sender, EventArgs e)
         {
             SearchPressed?.Invoke(this, EventArgs.Empty);
-            this.Close();
         }
         private void btn_selectPlaylist_Click(object sender, EventArgs e)
         {
             PlaylistPressed?.Invoke(this, EventArgs.Empty);
-            this.Close();
         }
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
             if (keyData == Keys.Escape)
             {
+                if (Helper.IsAnimatingButton || Helper.IsAnimatingPanel) return true;
                 CloseRequest?.Invoke(this, EventArgs.Empty);
-                this.Close();
                 return true;
             }
             return base.ProcessCmdKey(ref msg, keyData);

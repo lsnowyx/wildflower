@@ -30,7 +30,6 @@
             if (this.track_list.SelectedItem == null) return;
             SongToPlay?.Invoke(this, track_list.SelectedItem.ToString());
             CloseRequest?.Invoke(this, EventArgs.Empty);
-            this.Close();
         }
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
@@ -46,8 +45,8 @@
             }
             if (keyData == Keys.Escape)
             {
+                if (Helper.IsAnimatingButton || Helper.IsAnimatingPanel) return true;
                 CloseRequest?.Invoke(this, EventArgs.Empty);
-                this.Close();
                 return true;
             }
             return base.ProcessCmdKey(ref msg, keyData);

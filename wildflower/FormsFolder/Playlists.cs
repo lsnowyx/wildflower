@@ -32,7 +32,6 @@
                     {
                         Playlist2Play?.Invoke(this, Path.GetFileName(dir));
                         CloseRequest?.Invoke(this, EventArgs.Empty);
-                        this.Close();
                     }
                 }
             }
@@ -78,7 +77,6 @@
                         if (track_list.Items.Count == 0)
                         {
                             CloseRequest?.Invoke(this, EventArgs.Empty);
-                            this.Close();
                         }
                         if (Path.GetFileName(dir) == currentPlayListNr)
                         {
@@ -117,8 +115,8 @@
             }
             if (keyData == Keys.Escape)
             {
+                if (Helper.IsAnimatingButton || Helper.IsAnimatingPanel) return true;
                 CloseRequest?.Invoke(this, EventArgs.Empty);
-                this.Close();
                 return true;
             }
             return base.ProcessCmdKey(ref msg, keyData);
