@@ -434,7 +434,6 @@ namespace wildflower
                 {
                     btn_play_pause_Click(sender, EventArgs.Empty);
                 }
-                PanelEnabledVisible(false);
                 SearchButtonPressed();
             };
 
@@ -444,7 +443,6 @@ namespace wildflower
                 {
                     btn_play_pause_Click(sender, EventArgs.Empty);
                 }
-                PanelEnabledVisible(false);
                 PlayListButtonPressed();
             };
             f2.CloseRequest += (e, args) =>
