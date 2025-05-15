@@ -52,6 +52,10 @@
             }
             return base.ProcessCmdKey(ref msg, keyData);
         }
-        private void Search_Load(object sender, EventArgs e) => txbx_search.Focus();
+        private void Search_Load(object sender, EventArgs e)
+        {
+            txbx_search.Focus();
+            track_list.BackColor = this.BackColor;
+        }
     }
 }

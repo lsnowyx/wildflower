@@ -740,19 +740,16 @@ namespace wildflower
         {
             if (mainPanel.Controls.Count > 0)
                 mainPanel.Controls[0].Dispose();
-
             childForm.TopLevel = false;
             childForm.FormBorderStyle = FormBorderStyle.None;
             childForm.Dock = DockStyle.Fill;
             mainPanel.Location = new Point(0, 0);
             mainPanel.Size = childForm.Size;
-
+            childForm.BackColor = ColorTranslator.FromHtml("#1f1e33");
             mainPanel.Controls.Add(childForm);
             mainPanel.Tag = childForm;
             PanelEnabledVisible(true);
-
             childForm.Show();
-            childForm.Select();
         }
         private void PanelEnabledVisible(bool value)
         {

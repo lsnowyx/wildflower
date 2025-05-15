@@ -79,7 +79,7 @@
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.Black;
-            ClientSize = new Size(323, 112);
+            ClientSize = new Size(305, 103);
             Controls.Add(btn_Play);
             Controls.Add(track_list);
             Controls.Add(btn_searchTrack);

@@ -91,6 +91,7 @@
         }
         private void Playlists_Load(object sender, EventArgs e)
         {
+            track_list.BackColor = this.BackColor;
             int i = 0;
             foreach (string dir in Directory.GetDirectories(playlistsDir))
             {
