@@ -2,6 +2,9 @@
 {
     public static class Helper
     {
+        private static float currentAngle = 0;
+        public static bool IsAnimatingButton { get; private set; } = false;
+        public static bool IsAnimatingPanel { get; private set; } = false;
         public static string IconsPath { get; set; } = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "icons\\");
         public static Image ResizeImage(Image img, int width, int height)
         {
@@ -13,15 +16,25 @@
             }
             return bmp;
         }
-        public static async void AnimateRotation(PictureBox picBox, Image originalImage, int totalDegrees, int steps, int delayMs)
+
+        public static async void AnimateRotation(PictureBox picBox, Image baseImage, float deltaAngle, int steps, int delayMs)
         {
+            if (IsAnimatingButton) return;
+            IsAnimatingButton = true;
+
+            float startAngle = currentAngle;
+            float targetAngle = currentAngle + deltaAngle;
+
             for (int i = 1; i <= steps; i++)
             {
-                float angle = totalDegrees * i / (float)steps;
-                Image rotated = RotateImage(originalImage, angle);
+                float angle = startAngle + (deltaAngle * i / steps);
+                Image rotated = RotateImage(baseImage, angle);
                 picBox.Image = rotated;
+
                 await Task.Delay(delayMs);
             }
+            currentAngle = targetAngle % 360;
+            IsAnimatingButton = false;
         }
         private static Image RotateImage(Image img, float angle)
         {
@@ -41,6 +54,9 @@
         }
         public static async void AnimateSlideInFromTop(Panel panel, int steps = 10, int delayMs = 15)
         {
+            if (IsAnimatingPanel) return;
+            IsAnimatingPanel = true;
+
             int startY = -panel.Height;
             int endY = 0;
             int stepY = (endY - startY) / steps;
@@ -54,9 +70,12 @@
             }
 
             panel.Location = new Point(0, 0);
+            IsAnimatingPanel = false;
         }
         public static async void AnimateSlideOutToTop(Panel panel, int steps = 10, int delayMs = 15)
         {
+            if (IsAnimatingPanel) return;
+            IsAnimatingPanel = true;
             int startY = panel.Location.Y;
             int endY = -panel.Height;
             int stepY = (endY - startY) / steps;
@@ -68,6 +87,7 @@
                 await Task.Delay(delayMs);
             }
             panel.Visible = false;
+            IsAnimatingPanel = false;
         }
     }
 }

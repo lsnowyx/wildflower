@@ -64,17 +64,18 @@ namespace wildflower
                 mainPanelVisibleEnabledField = value;
                 if (value)
                 {
-                    Helper.AnimateRotation(btn_options, (Image)btn_options.Image.Clone(), 90, 10, 10);
+                    Helper.AnimateRotation(btn_options, OptionsBtnAnimationImage, 90, 10, 10);
                     Helper.AnimateSlideInFromTop(mainPanel);
                 }
                 else
                 {
-                    Helper.AnimateRotation(btn_options, (Image)btn_options.Image.Clone(), -90, 10, 10);
+                    Helper.AnimateRotation(btn_options, OptionsBtnAnimationImage, -90, 10, 10);
                     Helper.AnimateSlideOutToTop(mainPanel);
                 }
                 mainPanel.Enabled = value;
             }
         }
+        private readonly Image OptionsBtnAnimationImage = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconMoreOptions.png"), 50, 50);
 
         #region musicLibraryDependentCode
         //musicLibraryDependentCode
@@ -209,7 +210,7 @@ namespace wildflower
             btn_nextTrack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconNextTrack.png"), 50, 50);
             btn_loopTrack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconLoopTrack.png"), 50, 50);
             btn_shuffleTrack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconShuffleTrack.png"), 50, 50);
-            btn_options.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconMoreOptions.png"), 50, 50);
+            btn_options.Image = OptionsBtnAnimationImage;
             btn_goBack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconGoBack.png"), 50, 50);
             #endregion
 
@@ -422,6 +423,7 @@ namespace wildflower
         }
         private void btn_options_Click(object sender, EventArgs e)
         {
+            if (Helper.IsAnimatingButton || Helper.IsAnimatingPanel) return;
             if (isPlaying)
             {
                 btn_play_pause_Click(sender, e);
@@ -787,6 +789,7 @@ namespace wildflower
         {
             if (MainPanelVisibleEnabled)
             {
+                if (Helper.IsAnimatingButton || Helper.IsAnimatingPanel) return;
                 PanelEnabledVisible(false);
             }
         }
