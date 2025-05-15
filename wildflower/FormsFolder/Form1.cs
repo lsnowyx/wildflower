@@ -54,7 +54,26 @@ namespace wildflower
             }
         }
         private int bassTempSongIndex;
-
+        private bool mainPanelVisibleEnabledField = false;
+        private bool MainPanelVisibleEnabled
+        {
+            get => mainPanelVisibleEnabledField;
+            set
+            {
+                if (mainPanelVisibleEnabledField == value) return;
+                mainPanelVisibleEnabledField = value;
+                mainPanel.Enabled = value;
+                mainPanel.Visible = value;
+                if (value)
+                {
+                    Helper.AnimateRotation(btn_options, (Image)btn_options.Image.Clone(), 90, 10, 10);
+                }
+                else
+                {
+                    Helper.AnimateRotation(btn_options, (Image)btn_options.Image.Clone(), -90, 10, 10);
+                }
+            }
+        }
 
         #region musicLibraryDependentCode
         //musicLibraryDependentCode
@@ -289,7 +308,7 @@ namespace wildflower
         }
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            if (mainPanel.Enabled && mainPanel.Visible)
+            if (MainPanelVisibleEnabled)
                 return base.ProcessCmdKey(ref msg, keyData);
             if (keyData == Keys.Space)
             {
@@ -753,8 +772,7 @@ namespace wildflower
         }
         private void PanelEnabledVisible(bool value)
         {
-            mainPanel.Visible = value;
-            mainPanel.Enabled = value;
+            MainPanelVisibleEnabled = value;
             foreach (Control ctrl in this.Controls)
             {
                 if (ctrl == mainPanel || ctrl == this || ctrl == btn_goBack)
@@ -766,7 +784,7 @@ namespace wildflower
         }
         private void Form1_Click(object sender, EventArgs e)
         {
-            if (mainPanel.Visible && mainPanel.Enabled)
+            if (MainPanelVisibleEnabled)
             {
                 PanelEnabledVisible(false);
             }
