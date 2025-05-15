@@ -586,6 +586,7 @@ namespace wildflower
             {
                 lbl_tempSongName.Text = string.Empty;
             }
+            mainPanel.Visible = false;
         }
         private void btn_goBack_Click(object sender, EventArgs e)
         {
