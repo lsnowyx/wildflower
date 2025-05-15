@@ -1,6 +1,4 @@
-﻿using System.Security.Policy;
-
-namespace wildflower
+﻿namespace wildflower
 {
     public static class Helper
     {
