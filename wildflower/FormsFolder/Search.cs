@@ -22,8 +22,18 @@
         public static List<string> GetMatchingElements(string[] array, string substring, bool ignoreCase = true)
         {
             if (array == null || substring == null) return null;
-            return array.Where(f => f
-                .IndexOf(substring, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+            var comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+            return array
+                .Where(filePath =>
+                {
+                    string fileName = Path.GetFileNameWithoutExtension(filePath);
+                    var (title, artist) = Helper.GetMetadataFromFile(filePath);
+
+                    return fileName.IndexOf(substring, comparison) >= 0
+                        || title.IndexOf(substring, comparison) >= 0
+                        || artist.IndexOf(substring, comparison) >= 0;
+                })
+                .ToList();
         }
         private void btn_Play_Click(object sender, EventArgs e)
         {

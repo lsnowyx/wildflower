@@ -16,7 +16,6 @@
             }
             return bmp;
         }
-
         public static async void AnimateRotation(PictureBox picBox, Image baseImage, float deltaAngle, int steps, int delayMs)
         {
             if (IsAnimatingButton) return;
@@ -91,6 +90,11 @@
         }
         public static void TrackListAdd(string[] paths, ListBox track_list, bool ClearList = true)
         {
+            if (paths == null || paths.Length == 0)
+            {
+                track_list.Items.Clear();
+                return;
+            }
             if (ClearList) track_list.Items.Clear();
             foreach (var filePath in paths)
             {
