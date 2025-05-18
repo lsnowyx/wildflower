@@ -272,22 +272,14 @@ namespace wildflower
             if (!File.Exists(playlistFilePath)) return;
             var lines = File.ReadAllLines(playlistFilePath);
             paths = lines.ToArray();
-            track_list.Items.Clear();
-            foreach (var filePath in paths)
-            {
-                track_list.Items.Add(Path.GetFileName(filePath));
-            }
+            Helper.TrackListAdd(paths, track_list);
         }
         private void LoadSongsFromFolder(string folderPath)
         {
             paths = Directory.GetFiles(folderPath, "*.*", SearchOption.TopDirectoryOnly)
                              .Where(f => f.EndsWith(".mp3") || f.EndsWith(".wav") || f.EndsWith(".flac") || f.EndsWith(".ogg"))
                              .ToArray();
-            track_list.Items.Clear();
-            foreach (var file in paths)
-            {
-                track_list.Items.Add(Path.GetFileName(file));
-            }
+            Helper.TrackListAdd(paths, track_list);
         }
         private void p_bar_MouseMove(object sender, MouseEventArgs e)
         {
@@ -407,12 +399,7 @@ namespace wildflower
                 int j = rng.Next(i + 1);
                 (paths[i], paths[j]) = (paths[j], paths[i]);
             }
-
-            track_list.Items.Clear();
-            foreach (var file in paths)
-            {
-                track_list.Items.Add(Path.GetFileName(file));
-            }
+            Helper.TrackListAdd(paths, track_list);
             PlayTrack(0);
             SavePlaylistToFile();
             SavePlaybackState();
@@ -588,7 +575,7 @@ namespace wildflower
             }
             if (tempSongIsPlaying)
             {
-                lbl_tempSongName.Text = Path.GetFileName(paths[bassTempSongIndex]);
+                lbl_tempSongName.Text = Path.GetFileNameWithoutExtension(paths[bassTempSongIndex]);
             }
             else
             {
@@ -691,10 +678,7 @@ namespace wildflower
 
             paths = paths.Concat(newSongs).ToArray();
 
-            foreach (var newSong in newSongs)
-            {
-                track_list.Items.Add(Path.GetFileName(newSong));
-            }
+            Helper.TrackListAdd(newSongs.ToArray(), track_list, false);
 
             File.WriteAllLines(playlistSaveFile, paths);
         }
@@ -719,11 +703,7 @@ namespace wildflower
                     }
                 }
             }
-            track_list.Items.Clear();
-            foreach (string path in validPaths)
-            {
-                track_list.Items.Add(Path.GetFileName(path));
-            }
+            Helper.TrackListAdd(validPaths.ToArray(), track_list);
             currentIndex = Math.Max(0, currentIndex - removedBeforeCurrent);
             paths = validPaths.ToArray();
             File.WriteAllLines(playlistSaveFile, paths);

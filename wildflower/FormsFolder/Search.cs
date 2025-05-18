@@ -3,6 +3,7 @@
     public partial class Search : Form
     {
         private string[] paths;
+        private string[] validSearches;
         public event EventHandler<string> SongToPlay;
         public event EventHandler CloseRequest;
         public Search(string[] paths)
@@ -15,20 +16,19 @@
         private void btn_searchTrack_Click(object sender, EventArgs e)
         {
             if (this.txbx_search.Text == string.Empty) return;
-            this.track_list.Items.Clear();
-            this.track_list.Items.AddRange(GetMatchingElements(paths, this.txbx_search.Text).ToArray());
+            validSearches = GetMatchingElements(paths, this.txbx_search.Text).ToArray();
+            Helper.TrackListAdd(validSearches, track_list);
         }
         public static List<string> GetMatchingElements(string[] array, string substring, bool ignoreCase = true)
         {
             if (array == null || substring == null) return null;
             return array.Where(f => f
-                .IndexOf(substring, StringComparison.OrdinalIgnoreCase) >= 0)
-                .Select(f => Path.GetFileName(f)).ToList();
+                .IndexOf(substring, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
         }
         private void btn_Play_Click(object sender, EventArgs e)
         {
             if (this.track_list.SelectedItem == null) return;
-            SongToPlay?.Invoke(this, track_list.SelectedItem.ToString());
+            SongToPlay?.Invoke(this, validSearches[track_list.SelectedIndex]);
             CloseRequest?.Invoke(this, EventArgs.Empty);
         }
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)

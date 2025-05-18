@@ -89,5 +89,27 @@
             panel.Visible = false;
             IsAnimatingPanel = false;
         }
+        public static void TrackListAdd(string[] paths, ListBox track_list, bool ClearList = true)
+        {
+            if (ClearList) track_list.Items.Clear();
+            foreach (var filePath in paths)
+            {
+                try
+                {
+                    var file = TagLib.File.Create(filePath);
+                    string title = file.Tag.Title ?? Path.GetFileNameWithoutExtension(filePath);
+                    string artist = string.Empty;
+                    if (file.Tag.FirstPerformer != null)
+                    {
+                        artist += $" - {file.Tag.FirstPerformer}";
+                    }
+                    track_list.Items.Add(title + artist);
+                }
+                catch (Exception)
+                {
+                    track_list.Items.Add(Path.GetFileNameWithoutExtension(filePath));
+                }
+            }
+        }
     }
 }
