@@ -575,7 +575,8 @@ namespace wildflower
             }
             if (tempSongIsPlaying)
             {
-                lbl_tempSongName.Text = Path.GetFileNameWithoutExtension(paths[bassTempSongIndex]);
+                var Metadata = Helper.GetMetadataFromFile(paths[bassTempSongIndex]);
+                lbl_tempSongName.Text = Metadata.title + Metadata.artist;
             }
             else
             {

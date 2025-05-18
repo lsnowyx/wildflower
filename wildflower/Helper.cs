@@ -94,21 +94,26 @@
             if (ClearList) track_list.Items.Clear();
             foreach (var filePath in paths)
             {
-                try
+                var Metadata = GetMetadataFromFile(filePath);
+                track_list.Items.Add(Metadata.title + Metadata.artist);
+            }
+        }
+        public static (string title, string artist) GetMetadataFromFile(string filePath)
+        {
+            try
+            {
+                var file = TagLib.File.Create(filePath);
+                string title = file.Tag.Title ?? Path.GetFileNameWithoutExtension(filePath);
+                string artist = string.Empty;
+                if (file.Tag.FirstPerformer != null)
                 {
-                    var file = TagLib.File.Create(filePath);
-                    string title = file.Tag.Title ?? Path.GetFileNameWithoutExtension(filePath);
-                    string artist = string.Empty;
-                    if (file.Tag.FirstPerformer != null)
-                    {
-                        artist += $" - {file.Tag.FirstPerformer}";
-                    }
-                    track_list.Items.Add(title + artist);
+                    artist += $" - {file.Tag.FirstPerformer}";
                 }
-                catch (Exception)
-                {
-                    track_list.Items.Add(Path.GetFileNameWithoutExtension(filePath));
-                }
+                return (title, artist);
+            }
+            catch (Exception)
+            {
+                return (Path.GetFileNameWithoutExtension(filePath), string.Empty);
             }
         }
     }
