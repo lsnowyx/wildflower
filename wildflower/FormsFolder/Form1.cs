@@ -132,7 +132,7 @@ namespace wildflower
         }
         private void timer1_Tick(object sender, EventArgs e)
         {
-            if (bassStream != 0 && 
+            if (bassStream != 0 &&
                 Bass.BASS_ChannelIsActive(bassStream) != BASSActive.BASS_ACTIVE_STOPPED &&
                 !SuppressAutoPlay)
             {
@@ -148,9 +148,9 @@ namespace wildflower
                 lbl_track_start.Text = TimeSpan.FromMilliseconds(posMs).ToString(@"mm\:ss");
                 lbl_track_end.Text = TimeSpan.FromMilliseconds(lenMs).ToString(@"mm\:ss");
             }
-            if (Bass.BASS_ChannelIsActive(bassStream) == BASSActive.BASS_ACTIVE_STOPPED && 
-                !isTransitioning && 
-                paths != null && 
+            if (Bass.BASS_ChannelIsActive(bassStream) == BASSActive.BASS_ACTIVE_STOPPED &&
+                !isTransitioning &&
+                paths != null &&
                 paths.Length > 0 &&
                 !SuppressAutoPlay)
             {
@@ -254,10 +254,10 @@ namespace wildflower
         }
         private void InitStateTimer()
         {
-            stateTimer.Tick += (s, e) => SavePlaybackState();
             stateTimer.Start();
             timer1.Start();
         }
+        private void stateTimer_Tick(object sender, EventArgs e) => SavePlaybackState();
         private void SavePlaybackState()
         {
             if (paths == null || paths.Length == 0) return;

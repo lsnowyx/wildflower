@@ -181,6 +181,7 @@
             // stateTimer
             // 
             stateTimer.Interval = 30000;
+            stateTimer.Tick += stateTimer_Tick;
             // 
             // lbl_tempSongName
             // 
