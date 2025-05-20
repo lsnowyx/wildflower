@@ -265,7 +265,7 @@ namespace wildflower
             int index = currentIndex;
             long time = Bass.BASS_ChannelGetPosition(bassStream);
             resumeTimeMs = time;
-
+            track_list.SelectedIndex = currentIndex;
             File.WriteAllText(playbackStateFile, $"{index}|{time}");
         }
         private async void Form1_Load(object sender, EventArgs e)
