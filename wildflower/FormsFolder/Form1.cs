@@ -132,7 +132,9 @@ namespace wildflower
         }
         private void timer1_Tick(object sender, EventArgs e)
         {
-            if (bassStream != 0 && Bass.BASS_ChannelIsActive(bassStream) != BASSActive.BASS_ACTIVE_STOPPED)
+            if (bassStream != 0 && 
+                Bass.BASS_ChannelIsActive(bassStream) != BASSActive.BASS_ACTIVE_STOPPED &&
+                !SuppressAutoPlay)
             {
                 long pos = Bass.BASS_ChannelGetPosition(bassStream);
                 long len = Bass.BASS_ChannelGetLength(bassStream);
@@ -146,7 +148,11 @@ namespace wildflower
                 lbl_track_start.Text = TimeSpan.FromMilliseconds(posMs).ToString(@"mm\:ss");
                 lbl_track_end.Text = TimeSpan.FromMilliseconds(lenMs).ToString(@"mm\:ss");
             }
-            if (Bass.BASS_ChannelIsActive(bassStream) == BASSActive.BASS_ACTIVE_STOPPED && !isTransitioning && paths != null && paths.Length > 0)
+            if (Bass.BASS_ChannelIsActive(bassStream) == BASSActive.BASS_ACTIVE_STOPPED && 
+                !isTransitioning && 
+                paths != null && 
+                paths.Length > 0 &&
+                !SuppressAutoPlay)
             {
                 isTransitioning = true;
                 int nextIndex = currentIndex;
@@ -250,6 +256,7 @@ namespace wildflower
         {
             stateTimer.Tick += (s, e) => SavePlaybackState();
             stateTimer.Start();
+            timer1.Start();
         }
         private void SavePlaybackState()
         {
@@ -552,7 +559,9 @@ namespace wildflower
             f2.SongToPlay += async (e, songToPlay) =>
             {
                 if (paths == null || songToPlay == null) return;
+                SuppressAutoPlay = true;
                 bassTempSongIndex = await Task.Run(() => Array.FindIndex(paths, f => f.Contains(songToPlay)));
+                SuppressAutoPlay = false;
                 BassTempIsPlaying = true;
                 PanelEnabledVisible(false);
             };
