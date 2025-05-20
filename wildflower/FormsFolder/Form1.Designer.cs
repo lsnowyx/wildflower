@@ -46,6 +46,7 @@
             lbl_tempSongName = new Label();
             btn_goBack = new PictureBox();
             mainPanel = new Panel();
+            lbl_loadingtxt = new Label();
             ((System.ComponentModel.ISupportInitialize)track_volume).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_play_pause).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_nextTrack).BeginInit();
@@ -120,7 +121,6 @@
             // 
             // timer1
             // 
-            timer1.Enabled = true;
             timer1.Tick += timer1_Tick;
             // 
             // btn_play_pause
@@ -181,6 +181,7 @@
             // stateTimer
             // 
             stateTimer.Interval = 30000;
+            stateTimer.Tick += stateTimer_Tick;
             // 
             // lbl_tempSongName
             // 
@@ -208,12 +209,23 @@
             mainPanel.Size = new Size(80, 50);
             mainPanel.TabIndex = 24;
             // 
+            // lbl_loadingtxt
+            // 
+            lbl_loadingtxt.AutoSize = true;
+            lbl_loadingtxt.Location = new Point(219, 53);
+            lbl_loadingtxt.Name = "lbl_loadingtxt";
+            lbl_loadingtxt.Size = new Size(59, 15);
+            lbl_loadingtxt.TabIndex = 25;
+            lbl_loadingtxt.Text = "Loading...";
+            lbl_loadingtxt.Visible = false;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.Black;
             ClientSize = new Size(345, 208);
+            Controls.Add(lbl_loadingtxt);
             Controls.Add(mainPanel);
             Controls.Add(btn_goBack);
             Controls.Add(lbl_tempSongName);
@@ -264,5 +276,6 @@
         private Label lbl_tempSongName;
         private PictureBox btn_goBack;
         private Panel mainPanel;
+        private Label lbl_loadingtxt;
     }
 }

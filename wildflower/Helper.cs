@@ -88,7 +88,7 @@
             panel.Visible = false;
             IsAnimatingPanel = false;
         }
-        public static void TrackListAdd(string[] paths, ListBox track_list, bool ClearList = true)
+        public static async Task TrackListAdd(string[] paths, ListBox track_list, bool ClearList = true)
         {
             if (paths == null || paths.Length == 0)
             {
@@ -96,11 +96,22 @@
                 return;
             }
             if (ClearList) track_list.Items.Clear();
-            foreach (var filePath in paths)
+            await Task.Run(() =>
             {
-                var Metadata = GetMetadataFromFile(filePath);
-                track_list.Items.Add(Metadata.title + Metadata.artist);
-            }
+                foreach (var filePath in paths)
+                {
+                    var Metadata = GetMetadataFromFile(filePath);
+                    if (track_list.InvokeRequired)
+                    {
+                        track_list.Invoke(() =>
+                        track_list.Items.Add(Metadata.title + Metadata.artist));
+                    }
+                    else
+                    {
+                        track_list.Items.Add(Metadata.title + Metadata.artist);
+                    }
+                }
+            });
         }
         public static (string title, string artist) GetMetadataFromFile(string filePath)
         {

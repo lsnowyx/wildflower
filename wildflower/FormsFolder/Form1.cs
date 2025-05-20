@@ -76,11 +76,28 @@ namespace wildflower
             }
         }
         private readonly Image OptionsBtnAnimationImage = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconMoreOptions.png"), 50, 50);
+        private bool suppressAutoPlayField = false;
+        private bool SuppressAutoPlay
+        {
+            get => suppressAutoPlayField; set
+            {
+                suppressAutoPlayField = value;
+                track_list.Visible = !value;
+                track_list.Enabled = !value;
+                btn_play_pause.Enabled = !value;
+                btn_prevTrack.Enabled = !value;
+                btn_nextTrack.Enabled = !value;
+                btn_shuffleTrack.Enabled = !value;
+                btn_loopTrack.Enabled = !value;
+                lbl_loadingtxt.Visible = value;
+            }
+        }
 
         #region musicLibraryDependentCode
         //musicLibraryDependentCode
         private void PlayTrack(int index, long startAt = 0)
         {
+            if (SuppressAutoPlay) return;
             if (paths == null || index < 0 || index >= paths.Length) return;
             if (!BassTempIsPlaying)
             {
@@ -98,12 +115,26 @@ namespace wildflower
 
             Bass.BASS_ChannelPlay(bassStream, false);
             Bass.BASS_ChannelSetAttribute(bassStream, BASSAttribute.BASS_ATTRIB_VOL, track_volume.Value / 100f);
-            track_list.SelectedIndex = index;
+            if (track_list.InvokeRequired)
+            {
+                track_list.Invoke(() =>
+                {
+                    if (index >= 0 && index < track_list.Items.Count)
+                        track_list.SelectedIndex = index;
+                });
+            }
+            else
+            {
+                if (index >= 0 && index < track_list.Items.Count)
+                    track_list.SelectedIndex = index;
+            }
             isPlaying = true;
         }
         private void timer1_Tick(object sender, EventArgs e)
         {
-            if (bassStream != 0 && Bass.BASS_ChannelIsActive(bassStream) != BASSActive.BASS_ACTIVE_STOPPED)
+            if (bassStream != 0 &&
+                Bass.BASS_ChannelIsActive(bassStream) != BASSActive.BASS_ACTIVE_STOPPED &&
+                !SuppressAutoPlay)
             {
                 long pos = Bass.BASS_ChannelGetPosition(bassStream);
                 long len = Bass.BASS_ChannelGetLength(bassStream);
@@ -117,7 +148,11 @@ namespace wildflower
                 lbl_track_start.Text = TimeSpan.FromMilliseconds(posMs).ToString(@"mm\:ss");
                 lbl_track_end.Text = TimeSpan.FromMilliseconds(lenMs).ToString(@"mm\:ss");
             }
-            if (Bass.BASS_ChannelIsActive(bassStream) == BASSActive.BASS_ACTIVE_STOPPED && !isTransitioning && paths != null && paths.Length > 0)
+            if (Bass.BASS_ChannelIsActive(bassStream) == BASSActive.BASS_ACTIVE_STOPPED &&
+                !isTransitioning &&
+                paths != null &&
+                paths.Length > 0 &&
+                !SuppressAutoPlay)
             {
                 isTransitioning = true;
                 int nextIndex = currentIndex;
@@ -219,9 +254,10 @@ namespace wildflower
         }
         private void InitStateTimer()
         {
-            stateTimer.Tick += (s, e) => SavePlaybackState();
             stateTimer.Start();
+            timer1.Start();
         }
+        private void stateTimer_Tick(object sender, EventArgs e) => SavePlaybackState();
         private void SavePlaybackState()
         {
             if (paths == null || paths.Length == 0) return;
@@ -229,57 +265,71 @@ namespace wildflower
             int index = currentIndex;
             long time = Bass.BASS_ChannelGetPosition(bassStream);
             resumeTimeMs = time;
-
+            track_list.SelectedIndex = currentIndex;
             File.WriteAllText(playbackStateFile, $"{index}|{time}");
         }
-        private void Form1_Load(object sender, EventArgs e)
+        private async void Form1_Load(object sender, EventArgs e)
         {
+            SuppressAutoPlay = true;
             if (!File.Exists(musicFolderPath))
             {
                 MessageBox.Show("Please select a song folder");
                 btn_open_Click(sender, e);
+                SuppressAutoPlay = false;
                 return;
             }
             if (File.Exists(musicFolderPath) && !File.Exists(playlistSaveFile))
             {
-                string savedPath = File.ReadAllText(musicFolderPath);
+                string savedPath = await File.ReadAllTextAsync(musicFolderPath);
                 if (Directory.Exists(savedPath))
                 {
                     musicFolder = savedPath;
-                    LoadSongsFromFolder(musicFolder);
+                    await LoadSongsFromFolder(musicFolder);
+                    SuppressAutoPlay = false;
                     btn_shuffleTrack_DoubleClick(sender, e);
                 }
             }
             if (File.Exists(playbackStateFile) && File.Exists(playlistSaveFile))
             {
-                LoadPlaylistFromFile(playlistSaveFile);
-                var parts = File.ReadAllText(playbackStateFile).Split('|');
+                await LoadPlaylistFromFile(playlistSaveFile);
+                var part = await File.ReadAllTextAsync(playbackStateFile);
+                var parts = part.Split('|');
                 if (parts.Length == 2 &&
                     int.TryParse(parts[0], out int index) &&
                     long.TryParse(parts[1], out long time))
                 {
                     currentIndex = index;
                     resumeTimeMs = time;
-                    RefreshPlaylist();
+                    await RefreshPlaylist();
+                    SuppressAutoPlay = false;
                     PlayTrack(currentIndex, resumeTimeMs);
                 }
             }
             SavePlaybackState();
             InitStateTimer();
         }
-        private void LoadPlaylistFromFile(string playlistFilePath)
+        private async Task LoadPlaylistFromFile(string playlistFilePath)
         {
             if (!File.Exists(playlistFilePath)) return;
-            var lines = File.ReadAllLines(playlistFilePath);
+            var lines = await File.ReadAllLinesAsync(playlistFilePath);
             paths = lines.ToArray();
-            Helper.TrackListAdd(paths, track_list);
+            SuppressAutoPlay = true;
+            await Helper.TrackListAdd(paths, track_list);
+            SuppressAutoPlay = false;
         }
-        private void LoadSongsFromFolder(string folderPath)
+        private async Task LoadSongsFromFolder(string folderPath)
         {
-            paths = Directory.GetFiles(folderPath, "*.*", SearchOption.TopDirectoryOnly)
-                             .Where(f => f.EndsWith(".mp3") || f.EndsWith(".wav") || f.EndsWith(".flac") || f.EndsWith(".ogg"))
-                             .ToArray();
-            Helper.TrackListAdd(paths, track_list);
+            await Task.Run(() =>
+                paths = Directory
+                    .GetFiles(folderPath, "*.*", SearchOption.TopDirectoryOnly)
+                    .Where(f => f.EndsWith(".mp3") ||
+                    f.EndsWith(".wav") ||
+                    f.EndsWith(".flac") ||
+                    f.EndsWith(".ogg"))
+                    .ToArray());
+            SuppressAutoPlay = true;
+            await Helper.TrackListAdd(paths, track_list);
+            SuppressAutoPlay = false;
         }
         private void p_bar_MouseMove(object sender, MouseEventArgs e)
         {
@@ -294,11 +344,10 @@ namespace wildflower
             hoverTimeLabel.BringToFront();
         }
         private void p_bar_MouseLeave(object sender, EventArgs e) => hoverTimeLabel.Visible = false;
-        private void SavePlaylistToFile()
+        private async Task SavePlaylistToFile()
         {
             if (paths == null || paths.Length == 0) return;
-
-            File.WriteAllLines(playlistSaveFile, paths);
+            await File.WriteAllLinesAsync(playlistSaveFile, paths);
         }
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
@@ -371,6 +420,7 @@ namespace wildflower
         }
         private void btn_nextTrack_Click(object sender, EventArgs e)
         {
+            if (paths == null || paths.Length == 0) return;
             if (currentIndex < paths.Length - 1)
             {
                 currentIndex++;
@@ -379,6 +429,7 @@ namespace wildflower
         }
         private void btn_prevTrack_Click(object sender, EventArgs e)
         {
+            if (paths == null || paths.Length == 0) return;
             if (currentIndex > 0)
             {
                 currentIndex--;
@@ -389,19 +440,24 @@ namespace wildflower
         {
             isLooped = !isLooped;
         }
-        private void btn_shuffleTrack_DoubleClick(object sender, EventArgs e)
+        private async void btn_shuffleTrack_DoubleClick(object sender, EventArgs e)
         {
             if (paths == null || paths.Length == 0) return;
 
             Random rng = new Random();
-            for (int i = paths.Length - 1; i > 0; i--)
+            await Task.Run(() =>
             {
-                int j = rng.Next(i + 1);
-                (paths[i], paths[j]) = (paths[j], paths[i]);
-            }
-            Helper.TrackListAdd(paths, track_list);
+                for (int i = paths.Length - 1; i > 0; i--)
+                {
+                    int j = rng.Next(i + 1);
+                    (paths[i], paths[j]) = (paths[j], paths[i]);
+                }
+            });
+            SuppressAutoPlay = true;
+            await Helper.TrackListAdd(paths, track_list);
+            SuppressAutoPlay = false;
             PlayTrack(0);
-            SavePlaylistToFile();
+            await SavePlaylistToFile();
             SavePlaybackState();
             shuffleClickCounter = 0;
         }
@@ -430,7 +486,7 @@ namespace wildflower
                 PanelEnabledVisible(false);
             };
 
-            f2.UpdatePressed += (s, args) =>
+            f2.UpdatePressed += async (s, args) =>
             {
                 if (paths == null || paths.Length == 0)
                 {
@@ -438,7 +494,7 @@ namespace wildflower
                     return;
                 }
                 PanelEnabledVisible(false);
-                RefreshPlaylist();
+                await RefreshPlaylist();
                 SavePlaybackState();
                 PlayTrack(currentIndex, resumeTimeMs);
             };
@@ -500,10 +556,12 @@ namespace wildflower
                 return;
             }
             Search f2 = new Search(paths);
-            f2.SongToPlay += (e, songToPlay) =>
+            f2.SongToPlay += async (e, songToPlay) =>
             {
                 if (paths == null || songToPlay == null) return;
-                bassTempSongIndex = Array.FindIndex(paths, f => f.Contains(songToPlay));
+                SuppressAutoPlay = true;
+                bassTempSongIndex = await Task.Run(() => Array.FindIndex(paths, f => f.Contains(songToPlay)));
+                SuppressAutoPlay = false;
                 BassTempIsPlaying = true;
                 PanelEnabledVisible(false);
             };
@@ -646,9 +704,9 @@ namespace wildflower
             File.WriteAllText(lastUsedFile, validPlaylistIndex);
             basePlaylistPath = Path.Combine(playlistsDir, validPlaylistIndex);
         }
-        private void RefreshPlaylist()
+        private async Task RefreshPlaylist()
         {
-            musicFolder = File.ReadAllText(musicFolderPath);
+            musicFolder = await File.ReadAllTextAsync(musicFolderPath);
             if (string.IsNullOrEmpty(musicFolder) || !Directory.Exists(musicFolder))
             {
                 MessageBox.Show("Update your music folder path");
@@ -661,53 +719,57 @@ namespace wildflower
                 }
                 return;
             }
-            CleanMissingTracks();
-            UpdatePlaylistWithNewSongs();
+            await CleanMissingTracks();
+            await UpdatePlaylistWithNewSongs();
         }
-        private void UpdatePlaylistWithNewSongs()
+        private async Task UpdatePlaylistWithNewSongs()
         {
-            var allSongsInFolder = Directory.GetFiles(musicFolder, "*.*", SearchOption.TopDirectoryOnly)
-                .Where(f => f.EndsWith(".mp3") || f.EndsWith(".wav") || f.EndsWith(".flac") || f.EndsWith(".ogg"))
-                .ToList();
-
-            var currentPathsSet = new HashSet<string>(paths, StringComparer.OrdinalIgnoreCase);
-
-            var newSongs = allSongsInFolder.Where(f => !currentPathsSet.Contains(f)).ToList();
-
-            if (newSongs.Count == 0)
-                return;
-
+            List<string> newSongs = new List<string>();
+            await Task.Run(() =>
+            {
+                var currentPathsSet = new HashSet<string>(paths, StringComparer.OrdinalIgnoreCase);
+                var allSongsInFolder = Directory.GetFiles(musicFolder, "*.*", SearchOption.TopDirectoryOnly)
+                    .Where(f => f.EndsWith(".mp3") || f.EndsWith(".wav") || f.EndsWith(".flac") || f.EndsWith(".ogg"))
+                    .ToList();
+                newSongs = allSongsInFolder.Where(f => !currentPathsSet.Contains(f)).ToList();
+            });
+            if (newSongs.Count == 0) return;
             paths = paths.Concat(newSongs).ToArray();
-
-            Helper.TrackListAdd(newSongs.ToArray(), track_list, false);
-
-            File.WriteAllLines(playlistSaveFile, paths);
+            SuppressAutoPlay = true;
+            await Helper.TrackListAdd(newSongs.ToArray(), track_list, false);
+            SuppressAutoPlay = false;
+            await File.WriteAllLinesAsync(playlistSaveFile, paths);
         }
-        private void CleanMissingTracks()
+        private async Task CleanMissingTracks()
         {
             int removedBeforeCurrent = 0;
             List<string> validPaths = new List<string>();
-            for (int i = 0; i < paths.Length; i++)
+            await Task.Run(() =>
             {
-                string file = paths[i];
-                bool exists = File.Exists(file);
+                for (int i = 0; i < paths.Length; i++)
+                {
+                    string file = paths[i];
+                    bool exists = File.Exists(file);
 
-                if (exists)
-                {
-                    validPaths.Add(file);
-                }
-                else
-                {
-                    if (i < currentIndex)
+                    if (exists)
                     {
-                        removedBeforeCurrent++;
+                        validPaths.Add(file);
+                    }
+                    else
+                    {
+                        if (i < currentIndex)
+                        {
+                            removedBeforeCurrent++;
+                        }
                     }
                 }
-            }
-            Helper.TrackListAdd(validPaths.ToArray(), track_list);
+            });
+            SuppressAutoPlay = true;
+            await Helper.TrackListAdd(validPaths.ToArray(), track_list);
+            SuppressAutoPlay = false;
             currentIndex = Math.Max(0, currentIndex - removedBeforeCurrent);
             paths = validPaths.ToArray();
-            File.WriteAllLines(playlistSaveFile, paths);
+            await File.WriteAllLinesAsync(playlistSaveFile, paths);
         }
         private bool FindAvailablePlaylist()
         {

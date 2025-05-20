@@ -13,17 +13,18 @@
             btn_Play.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconPlayButton.png"), 50, 50);
             this.paths = paths;
         }
-        private void btn_searchTrack_Click(object sender, EventArgs e)
+        private async void btn_searchTrack_Click(object sender, EventArgs e)
         {
             if (this.txbx_search.Text == string.Empty) return;
-            validSearches = GetMatchingElements(paths, this.txbx_search.Text).ToArray();
-            Helper.TrackListAdd(validSearches, track_list);
+            var getMatchingElements = await GetMatchingElements(paths, this.txbx_search.Text);
+            validSearches = getMatchingElements.ToArray();
+            await Helper.TrackListAdd(validSearches, track_list);
         }
-        public static List<string> GetMatchingElements(string[] array, string substring, bool ignoreCase = true)
+        public static async Task<List<string>> GetMatchingElements(string[] array, string substring, bool ignoreCase = true)
         {
-            if (array == null || substring == null) return null;
+            if (array == null || array.Length == 0 || substring == null) return null;
             var comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
-            return array
+            return await Task.Run(() => array
                 .Where(filePath =>
                 {
                     string fileName = Path.GetFileNameWithoutExtension(filePath);
@@ -33,7 +34,7 @@
                         || title.IndexOf(substring, comparison) >= 0
                         || artist.IndexOf(substring, comparison) >= 0;
                 })
-                .ToList();
+                .ToList());
         }
         private void btn_Play_Click(object sender, EventArgs e)
         {
