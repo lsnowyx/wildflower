@@ -76,7 +76,7 @@ namespace wildflower
             }
         }
         private readonly Image OptionsBtnAnimationImage = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconMoreOptions.png"), 50, 50);
-        private bool suppressAutoPlayField = false;
+        private bool suppressAutoPlayField = true;
         private bool SuppressAutoPlay
         {
             get => suppressAutoPlayField; set
@@ -97,7 +97,6 @@ namespace wildflower
         //musicLibraryDependentCode
         private void PlayTrack(int index, long startAt = 0)
         {
-            if (SuppressAutoPlay) return;
             if (paths == null || index < 0 || index >= paths.Length) return;
             if (!BassTempIsPlaying)
             {
@@ -155,6 +154,19 @@ namespace wildflower
                 !SuppressAutoPlay)
             {
                 isTransitioning = true;
+                if (BassTempIsPlaying)
+                {
+                    if (isLooped)
+                    {
+                        PlayTrack(bassTempSongIndex);
+                    }
+                    else
+                    {
+                        btn_goBack_Click(sender, e);
+                    }
+                    isTransitioning = false;
+                    return;
+                }
                 int nextIndex = currentIndex;
                 if (!isLooped)
                 {
@@ -167,17 +179,6 @@ namespace wildflower
                 else
                 {
                     btn_shuffleTrack_DoubleClick(sender, e);
-                }
-                if (BassTempIsPlaying)
-                {
-                    if (isLooped)
-                    {
-                        PlayTrack(bassTempSongIndex);
-                    }
-                    else
-                    {
-                        btn_goBack_Click(sender, e);
-                    }
                 }
                 isTransitioning = false;
             }
@@ -220,12 +221,6 @@ namespace wildflower
             lbl_volume.Text = "30%";
             track_volume.Value = 30;
             lbl_track_end.BringToFront();
-
-            mainPanel.Visible = false;
-            mainPanel.Enabled = false;
-
-            btn_goBack.Enabled = false;
-            btn_goBack.Visible = false;
 
             #region p_barHoverLabelData
             hoverTimeLabel.AutoSize = true;
@@ -313,9 +308,6 @@ namespace wildflower
             if (!File.Exists(playlistFilePath)) return;
             var lines = await File.ReadAllLinesAsync(playlistFilePath);
             paths = lines.ToArray();
-            SuppressAutoPlay = true;
-            await Helper.TrackListAdd(paths, track_list);
-            SuppressAutoPlay = false;
         }
         private async Task LoadSongsFromFolder(string folderPath)
         {
@@ -488,6 +480,7 @@ namespace wildflower
 
             f2.UpdatePressed += async (s, args) =>
             {
+                if (SuppressAutoPlay) return;
                 if (paths == null || paths.Length == 0)
                 {
                     MessageBox.Show("Nowhere to update from");
