@@ -1,3 +1,4 @@
+using Microsoft.Win32;
 using Un4seen.Bass;
 namespace wildflower
 {
@@ -82,14 +83,17 @@ namespace wildflower
             get => suppressAutoPlayField; set
             {
                 suppressAutoPlayField = value;
-                track_list.Visible = !value;
-                track_list.Enabled = !value;
-                btn_play_pause.Enabled = !value;
-                btn_prevTrack.Enabled = !value;
-                btn_nextTrack.Enabled = !value;
-                btn_shuffleTrack.Enabled = !value;
-                btn_loopTrack.Enabled = !value;
                 lbl_loadingtxt.Visible = value;
+                track_list.Visible = !value;
+                if (!MainPanelVisibleEnabled)
+                {
+                    track_list.Enabled = !value;
+                    btn_play_pause.Enabled = !value;
+                    btn_prevTrack.Enabled = !value;
+                    btn_nextTrack.Enabled = !value;
+                    btn_shuffleTrack.Enabled = !value;
+                    btn_loopTrack.Enabled = !value;
+                }
             }
         }
 
@@ -244,8 +248,18 @@ namespace wildflower
             btn_goBack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconGoBack.png"), 50, 50);
             #endregion
 
+            SystemEvents.PowerModeChanged += SystemEvents_PowerModeChanged;
+
             Bass.BASS_Init(-1, 44100, BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero);
             InitializePlaylistPath();
+        }
+        private void SystemEvents_PowerModeChanged(object sender, PowerModeChangedEventArgs e)
+        {
+            if (e.Mode == PowerModes.Suspend)
+            {
+                SavePlaybackState();
+                btn_play_pause_Click(sender, e);
+            }
         }
         private void InitStateTimer()
         {
