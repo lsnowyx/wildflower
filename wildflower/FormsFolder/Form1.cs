@@ -834,7 +834,10 @@ namespace wildflower
             MainPanelVisibleEnabled = value;
             foreach (Control ctrl in this.Controls)
             {
-                if (ctrl == mainPanel || ctrl == this || ctrl == btn_goBack)
+                if (ctrl == mainPanel ||
+                    ctrl == this ||
+                    ctrl == btn_goBack ||
+                    ctrl == lbl_loadingtxt)
                 {
                     continue;
                 }
