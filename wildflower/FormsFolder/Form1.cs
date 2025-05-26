@@ -1,4 +1,5 @@
 using Microsoft.Win32;
+using NAudio.CoreAudioApi;
 using Un4seen.Bass;
 namespace wildflower
 {
@@ -114,6 +115,11 @@ namespace wildflower
         }
         //UI Altering Props
 
+        //AudioDeviceChanged
+        private MMDeviceEnumerator deviceEnumerator;
+        private AudioDeviceWatcher deviceWatcher;
+        //AudioDeviceChanged
+
         //FieldsAndProperties
         #endregion
 
@@ -149,7 +155,12 @@ namespace wildflower
             btn_goBack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconGoBack.png"), 50, 50);
             #endregion
 
+            #region Extra
+            //Extra
             SystemEvents.PowerModeChanged += SystemEvents_PowerModeChanged;
+            InitAudioWatcher();
+            //Extra
+            #endregion
 
             Bass.BASS_Init(-1, 44100, BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero);
         }
@@ -915,6 +926,19 @@ namespace wildflower
 
         #region Extra
         //Extra
+        private void InitAudioWatcher()
+        {
+            deviceEnumerator = new MMDeviceEnumerator();
+            deviceWatcher = new AudioDeviceWatcher();
+            deviceWatcher.DefaultDeviceChanged += () =>
+            {
+                if (isPlaying)
+                {
+                    btn_play_pause_Click(this, EventArgs.Empty); // pause
+                }
+            };
+            deviceEnumerator.RegisterEndpointNotificationCallback(deviceWatcher);
+        }
         private async void SystemEvents_PowerModeChanged(object sender, PowerModeChangedEventArgs e)
         {
             if (e.Mode == PowerModes.Suspend)
