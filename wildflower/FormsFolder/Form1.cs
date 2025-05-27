@@ -10,7 +10,7 @@ namespace wildflower
 
         //InitializationFields
         private Label hoverTimeLabel = new Label();
-        private readonly Image OptionsBtnAnimationImage = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconMoreOptions.png"), 50, 50);
+        private readonly Image OptionsBtnAnimationImage;
         private short shuffleClickCounter = 0;
         //InitializationFields
 
@@ -27,8 +27,8 @@ namespace wildflower
             {
                 isLoopedField = value;
                 btn_loopTrack.Image = value ?
-                    Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconUnLoopTrack.png"), 50, 50) :
-                    Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconLoopTrack.png"), 50, 50);
+                    Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconUnLoopTrack.png"), btn_loopTrack.Width, btn_loopTrack.Height) :
+                    Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconLoopTrack.png"), btn_loopTrack.Width, btn_loopTrack.Height);
             }
         }
         private bool isPlayingField = false;
@@ -39,8 +39,8 @@ namespace wildflower
             {
                 isPlayingField = value;
                 btn_play_pause.Image = value ?
-                    Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconPauseButton.png"), 50, 50) :
-                    Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconPlayButton.png"), 50, 50);
+                    Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconPauseButton.png"), btn_play_pause.Width, btn_play_pause.Height) :
+                    Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconPlayButton.png"), btn_play_pause.Width, btn_play_pause.Height);
             }
         }
         //PlayTrack
