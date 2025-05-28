@@ -47,6 +47,7 @@
             btn_goBack = new PictureBox();
             mainPanel = new Panel();
             lbl_loadingtxt = new Label();
+            msgPanel = new Panel();
             ((System.ComponentModel.ISupportInitialize)track_volume).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_play_pause).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_nextTrack).BeginInit();
@@ -195,19 +196,23 @@
             // 
             // btn_goBack
             // 
+            btn_goBack.Enabled = false;
             btn_goBack.Location = new Point(219, 71);
             btn_goBack.Name = "btn_goBack";
             btn_goBack.Size = new Size(50, 50);
             btn_goBack.TabIndex = 23;
             btn_goBack.TabStop = false;
+            btn_goBack.Visible = false;
             btn_goBack.Click += btn_goBack_Click;
             // 
             // mainPanel
             // 
-            mainPanel.Location = new Point(219, 127);
+            mainPanel.Enabled = false;
+            mainPanel.Location = new Point(174, 127);
             mainPanel.Name = "mainPanel";
-            mainPanel.Size = new Size(80, 50);
+            mainPanel.Size = new Size(32, 50);
             mainPanel.TabIndex = 24;
+            mainPanel.Visible = false;
             // 
             // lbl_loadingtxt
             // 
@@ -219,12 +224,22 @@
             lbl_loadingtxt.Text = "Loading...";
             lbl_loadingtxt.Visible = false;
             // 
+            // msgPanel
+            // 
+            msgPanel.Enabled = false;
+            msgPanel.Location = new Point(212, 127);
+            msgPanel.Name = "msgPanel";
+            msgPanel.Size = new Size(32, 50);
+            msgPanel.TabIndex = 25;
+            msgPanel.Visible = false;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.Black;
             ClientSize = new Size(345, 208);
+            Controls.Add(msgPanel);
             Controls.Add(lbl_loadingtxt);
             Controls.Add(mainPanel);
             Controls.Add(btn_goBack);
@@ -277,5 +292,6 @@
         private PictureBox btn_goBack;
         private Panel mainPanel;
         private Label lbl_loadingtxt;
+        private Panel msgPanel;
     }
 }

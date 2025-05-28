@@ -1,22 +1,23 @@
+using Microsoft.Win32;
+using NAudio.CoreAudioApi;
 using Un4seen.Bass;
 namespace wildflower
 {
     public partial class Form1 : Form
     {
+        #region FieldsAndProperties
+        //FieldsAndProperties
+
+        //InitializationFields
         private Label hoverTimeLabel = new Label();
+        private readonly Image OptionsBtnAnimationImage;
+        private short shuffleClickCounter = 0;
+        //InitializationFields
+
+        //PlayTrack
         private string[] paths;
         private int currentIndex = 0;
-        private short shuffleClickCounter = 0;
         private long resumeTimeMs = -1;
-        private string musicFolder;
-        private string playlistsDir =
-            Path.Combine(
-                Environment.GetFolderPath
-                (Environment.SpecialFolder.ApplicationData), ".wildflower", "playlists");
-        private string basePlaylistPath;
-        private string musicFolderPath => Path.Combine(basePlaylistPath, "musicFolderPath.txt");
-        private string playlistSaveFile => Path.Combine(basePlaylistPath, "playlist.txt");
-        private string playbackStateFile => Path.Combine(basePlaylistPath, "state.txt");
         private bool isTransitioning = false;
         private bool isLoopedField = false;
         private bool isLooped
@@ -26,8 +27,8 @@ namespace wildflower
             {
                 isLoopedField = value;
                 btn_loopTrack.Image = value ?
-                    Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconUnLoopTrack.png"), 50, 50) :
-                    Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconLoopTrack.png"), 50, 50);
+                    Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconUnLoopTrack.png"), btn_loopTrack.Width, btn_loopTrack.Height) :
+                    Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconLoopTrack.png"), btn_loopTrack.Width, btn_loopTrack.Height);
             }
         }
         private bool isPlayingField = false;
@@ -38,10 +39,25 @@ namespace wildflower
             {
                 isPlayingField = value;
                 btn_play_pause.Image = value ?
-                    Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconPauseButton.png"), 50, 50) :
-                    Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconPlayButton.png"), 50, 50);
+                    Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconPauseButton.png"), btn_play_pause.Width, btn_play_pause.Height) :
+                    Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconPlayButton.png"), btn_play_pause.Width, btn_play_pause.Height);
             }
         }
+        //PlayTrack
+
+        //Directories
+        private string musicFolder;
+        private string playlistsDir =
+            Path.Combine(
+                Environment.GetFolderPath
+                (Environment.SpecialFolder.ApplicationData), ".wildflower", "playlists");
+        private string basePlaylistPath;
+        private string musicFolderPath => Path.Combine(basePlaylistPath, "musicFolderPath.txt");
+        private string playlistSaveFile => Path.Combine(basePlaylistPath, "playlist.txt");
+        private string playbackStateFile => Path.Combine(basePlaylistPath, "state.txt");
+        //Directories
+
+        //BassTempSong
         private int bassStream;
         private bool bassTempIsPlaying = false;
         private bool BassTempIsPlaying
@@ -54,6 +70,9 @@ namespace wildflower
             }
         }
         private int bassTempSongIndex;
+        //BassTempSong
+
+        //UI Altering Props
         private bool mainPanelVisibleEnabledField = false;
         private bool MainPanelVisibleEnabled
         {
@@ -75,29 +94,82 @@ namespace wildflower
                 mainPanel.Enabled = value;
             }
         }
-        private readonly Image OptionsBtnAnimationImage = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconMoreOptions.png"), 50, 50);
-        private bool suppressAutoPlayField = false;
+        private bool suppressAutoPlayField = true;
         private bool SuppressAutoPlay
         {
             get => suppressAutoPlayField; set
             {
                 suppressAutoPlayField = value;
-                track_list.Visible = !value;
-                track_list.Enabled = !value;
-                btn_play_pause.Enabled = !value;
-                btn_prevTrack.Enabled = !value;
-                btn_nextTrack.Enabled = !value;
-                btn_shuffleTrack.Enabled = !value;
-                btn_loopTrack.Enabled = !value;
                 lbl_loadingtxt.Visible = value;
+                track_list.Visible = !value;
+                if (!MainPanelVisibleEnabled)
+                {
+                    track_list.Enabled = !value;
+                    btn_play_pause.Enabled = !value;
+                    btn_prevTrack.Enabled = !value;
+                    btn_nextTrack.Enabled = !value;
+                    btn_shuffleTrack.Enabled = !value;
+                    btn_loopTrack.Enabled = !value;
+                }
             }
         }
+        //UI Altering Props
 
-        #region musicLibraryDependentCode
-        //musicLibraryDependentCode
+        //AudioDeviceChanged
+        private MMDeviceEnumerator deviceEnumerator;
+        private AudioDeviceWatcher deviceWatcher;
+        //AudioDeviceChanged
+
+        //FieldsAndProperties
+        #endregion
+
+        public Form1()
+        {
+            InitializeComponent();
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
+
+            lbl_volume.Text = "30%";
+            track_volume.Value = 30;
+            lbl_track_end.BringToFront();
+
+            #region p_barHoverLabelData
+            hoverTimeLabel.AutoSize = true;
+            hoverTimeLabel.BackColor = Color.Black;
+            hoverTimeLabel.ForeColor = Color.White;
+            hoverTimeLabel.Padding = new Padding(4);
+            hoverTimeLabel.Visible = false;
+            hoverTimeLabel.Font = new Font("Segoe UI", 8);
+            hoverTimeLabel.BringToFront();
+            this.Controls.Add(hoverTimeLabel);
+            #endregion
+
+            #region iconsInit
+            OptionsBtnAnimationImage = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconMoreOptions.png"), btn_options.Width, btn_options.Height);
+            this.Icon = new Icon(Helper.IconsPath + "wildflowerico.ico");
+            btn_play_pause.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconPlayButton.png"), btn_play_pause.Width, btn_play_pause.Height);
+            btn_prevTrack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconPreviousTrack.png"), btn_prevTrack.Width, btn_prevTrack.Height);
+            btn_nextTrack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconNextTrack.png"), btn_nextTrack.Width, btn_nextTrack.Height);
+            btn_loopTrack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconLoopTrack.png"), btn_loopTrack.Width, btn_loopTrack.Height);
+            btn_shuffleTrack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconShuffleTrack.png"), btn_shuffleTrack.Width, btn_shuffleTrack.Height);
+            btn_options.Image = OptionsBtnAnimationImage;
+            btn_goBack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconGoBack.png"), btn_goBack.Width, btn_goBack.Height);
+            #endregion
+
+            #region Extra
+            //Extra
+            SystemEvents.PowerModeChanged += SystemEvents_PowerModeChanged;
+            InitAudioWatcher();
+            //Extra
+            #endregion
+
+            Bass.BASS_Init(-1, 44100, BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero);
+        }
+
+        #region MusicLibraryDependentCode
+        //MusicLibraryDependentCode
         private void PlayTrack(int index, long startAt = 0)
         {
-            if (SuppressAutoPlay) return;
             if (paths == null || index < 0 || index >= paths.Length) return;
             if (!BassTempIsPlaying)
             {
@@ -130,7 +202,7 @@ namespace wildflower
             }
             isPlaying = true;
         }
-        private void timer1_Tick(object sender, EventArgs e)
+        private async void timer1_Tick(object sender, EventArgs e)
         {
             if (bassStream != 0 &&
                 Bass.BASS_ChannelIsActive(bassStream) != BASSActive.BASS_ACTIVE_STOPPED &&
@@ -155,6 +227,19 @@ namespace wildflower
                 !SuppressAutoPlay)
             {
                 isTransitioning = true;
+                if (BassTempIsPlaying)
+                {
+                    if (isLooped)
+                    {
+                        PlayTrack(bassTempSongIndex);
+                    }
+                    else
+                    {
+                        btn_goBack_Click(sender, e);
+                    }
+                    isTransitioning = false;
+                    return;
+                }
                 int nextIndex = currentIndex;
                 if (!isLooped)
                 {
@@ -166,18 +251,7 @@ namespace wildflower
                 }
                 else
                 {
-                    btn_shuffleTrack_DoubleClick(sender, e);
-                }
-                if (BassTempIsPlaying)
-                {
-                    if (isLooped)
-                    {
-                        PlayTrack(bassTempSongIndex);
-                    }
-                    else
-                    {
-                        btn_goBack_Click(sender, e);
-                    }
+                    await ShuffleTracksLogic();
                 }
                 isTransitioning = false;
             }
@@ -208,147 +282,11 @@ namespace wildflower
             lbl_volume.Text = track_volume.Value.ToString() + "%";
             Bass.BASS_ChannelSetAttribute(bassStream, BASSAttribute.BASS_ATTRIB_VOL, track_volume.Value / 100f);
         }
-        //musicLibraryDependentCode
+        //MusicLibraryDependentCode
         #endregion
 
-        public Form1()
-        {
-            InitializeComponent();
-            this.FormBorderStyle = FormBorderStyle.FixedSingle;
-            this.MaximizeBox = false;
-
-            lbl_volume.Text = "30%";
-            track_volume.Value = 30;
-            lbl_track_end.BringToFront();
-
-            mainPanel.Visible = false;
-            mainPanel.Enabled = false;
-
-            btn_goBack.Enabled = false;
-            btn_goBack.Visible = false;
-
-            #region p_barHoverLabelData
-            hoverTimeLabel.AutoSize = true;
-            hoverTimeLabel.BackColor = Color.Black;
-            hoverTimeLabel.ForeColor = Color.White;
-            hoverTimeLabel.Padding = new Padding(4);
-            hoverTimeLabel.Visible = false;
-            hoverTimeLabel.Font = new Font("Segoe UI", 8);
-            hoverTimeLabel.BringToFront();
-            this.Controls.Add(hoverTimeLabel);
-            #endregion
-
-            #region iconsInit
-            this.Icon = new Icon(Helper.IconsPath + "wildflowerico.ico");
-            btn_play_pause.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconPlayButton.png"), 50, 50);
-            btn_prevTrack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconPreviousTrack.png"), 50, 50);
-            btn_nextTrack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconNextTrack.png"), 50, 50);
-            btn_loopTrack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconLoopTrack.png"), 50, 50);
-            btn_shuffleTrack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconShuffleTrack.png"), 50, 50);
-            btn_options.Image = OptionsBtnAnimationImage;
-            btn_goBack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconGoBack.png"), 50, 50);
-            #endregion
-
-            Bass.BASS_Init(-1, 44100, BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero);
-            InitializePlaylistPath();
-        }
-        private void InitStateTimer()
-        {
-            stateTimer.Start();
-            timer1.Start();
-        }
-        private void stateTimer_Tick(object sender, EventArgs e) => SavePlaybackState();
-        private void SavePlaybackState()
-        {
-            if (paths == null || paths.Length == 0) return;
-
-            int index = currentIndex;
-            long time = Bass.BASS_ChannelGetPosition(bassStream);
-            resumeTimeMs = time;
-            track_list.SelectedIndex = currentIndex;
-            File.WriteAllText(playbackStateFile, $"{index}|{time}");
-        }
-        private async void Form1_Load(object sender, EventArgs e)
-        {
-            SuppressAutoPlay = true;
-            if (!File.Exists(musicFolderPath))
-            {
-                MessageBox.Show("Please select a song folder");
-                btn_open_Click(sender, e);
-                SuppressAutoPlay = false;
-                return;
-            }
-            if (File.Exists(musicFolderPath) && !File.Exists(playlistSaveFile))
-            {
-                string savedPath = await File.ReadAllTextAsync(musicFolderPath);
-                if (Directory.Exists(savedPath))
-                {
-                    musicFolder = savedPath;
-                    await LoadSongsFromFolder(musicFolder);
-                    SuppressAutoPlay = false;
-                    btn_shuffleTrack_DoubleClick(sender, e);
-                }
-            }
-            if (File.Exists(playbackStateFile) && File.Exists(playlistSaveFile))
-            {
-                await LoadPlaylistFromFile(playlistSaveFile);
-                var part = await File.ReadAllTextAsync(playbackStateFile);
-                var parts = part.Split('|');
-                if (parts.Length == 2 &&
-                    int.TryParse(parts[0], out int index) &&
-                    long.TryParse(parts[1], out long time))
-                {
-                    currentIndex = index;
-                    resumeTimeMs = time;
-                    await RefreshPlaylist();
-                    SuppressAutoPlay = false;
-                    PlayTrack(currentIndex, resumeTimeMs);
-                }
-            }
-            SavePlaybackState();
-            InitStateTimer();
-        }
-        private async Task LoadPlaylistFromFile(string playlistFilePath)
-        {
-            if (!File.Exists(playlistFilePath)) return;
-            var lines = await File.ReadAllLinesAsync(playlistFilePath);
-            paths = lines.ToArray();
-            SuppressAutoPlay = true;
-            await Helper.TrackListAdd(paths, track_list);
-            SuppressAutoPlay = false;
-        }
-        private async Task LoadSongsFromFolder(string folderPath)
-        {
-            await Task.Run(() =>
-                paths = Directory
-                    .GetFiles(folderPath, "*.*", SearchOption.TopDirectoryOnly)
-                    .Where(f => f.EndsWith(".mp3") ||
-                    f.EndsWith(".wav") ||
-                    f.EndsWith(".flac") ||
-                    f.EndsWith(".ogg"))
-                    .ToArray());
-            SuppressAutoPlay = true;
-            await Helper.TrackListAdd(paths, track_list);
-            SuppressAutoPlay = false;
-        }
-        private void p_bar_MouseMove(object sender, MouseEventArgs e)
-        {
-            int hoverMs = p_bar.Maximum * e.X / p_bar.Width;
-            string timeStr = TimeSpan.FromMilliseconds(hoverMs).ToString(@"mm\:ss");
-            hoverTimeLabel.Text = timeStr;
-            hoverTimeLabel.Location = p_bar.PointToScreen(e.Location);
-            hoverTimeLabel.Location = this.PointToClient(hoverTimeLabel.Location);
-            hoverTimeLabel.Top -= 22;
-            if (hoverMs > p_bar.Maximum * 0.9) hoverTimeLabel.Left -= 42;
-            hoverTimeLabel.Visible = true;
-            hoverTimeLabel.BringToFront();
-        }
-        private void p_bar_MouseLeave(object sender, EventArgs e) => hoverTimeLabel.Visible = false;
-        private async Task SavePlaylistToFile()
-        {
-            if (paths == null || paths.Length == 0) return;
-            await File.WriteAllLinesAsync(playlistSaveFile, paths);
-        }
+        #region WinFormsEventsCode
+        //WinFormsEventsCode
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
             if (MainPanelVisibleEnabled)
@@ -376,48 +314,27 @@ namespace wildflower
             }
             return base.ProcessCmdKey(ref msg, keyData);
         }
-        private void btn_open_Click(object sender, EventArgs e)
+        private async void Form1_Load(object sender, EventArgs e)
         {
-            FolderBrowserDialog fbd = new FolderBrowserDialog();
-            var fbdShowDialog = fbd.ShowDialog();
-            if (fbdShowDialog != DialogResult.OK && basePlaylistPath == null)
-            {
-                btn_open_Click(sender, e);
-                return;
-            }
-            if (fbdShowDialog == DialogResult.OK)
-            {
-                musicFolder = fbd.SelectedPath;
-                foreach (string dir in Directory.GetDirectories(playlistsDir))
-                {
-                    string existingPathFile = Path.Combine(dir, "musicFolderPath.txt");
-                    if (File.Exists(existingPathFile))
-                    {
-                        string existingPath = File.ReadAllText(existingPathFile);
-                        if (string.Equals(existingPath, musicFolder, StringComparison.OrdinalIgnoreCase))
-                        {
-                            MessageBox.Show("This folder is already part of a playlist.", "Duplicate Playlist", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            return;
-                        }
-                    }
-                }
-                int nextIndex = 0;
-                while (Directory.Exists(Path.Combine(playlistsDir, nextIndex.ToString())))
-                    nextIndex++;
-
-                string newPlaylistDir = Path.Combine(playlistsDir, nextIndex.ToString());
-                Directory.CreateDirectory(newPlaylistDir);
-
-                File.WriteAllText(Path.Combine(playlistsDir, "lastUsed.txt"), nextIndex.ToString());
-
-                File.WriteAllText(Path.Combine(newPlaylistDir, "musicFolderPath.txt"), musicFolder);
-
-
-                basePlaylistPath = newPlaylistDir;
-
-                Form1_Load(sender, e);
-            }
+            await InitializePlaylistPath();
+            await LoadEverything();
+            stateTimer.Start();
+            timer1.Start();
         }
+        private async void stateTimer_Tick(object sender, EventArgs e) => await SavePlaybackState();
+        private void p_bar_MouseMove(object sender, MouseEventArgs e)
+        {
+            int hoverMs = p_bar.Maximum * e.X / p_bar.Width;
+            string timeStr = TimeSpan.FromMilliseconds(hoverMs).ToString(@"mm\:ss");
+            hoverTimeLabel.Text = timeStr;
+            hoverTimeLabel.Location = p_bar.PointToScreen(e.Location);
+            hoverTimeLabel.Location = this.PointToClient(hoverTimeLabel.Location);
+            hoverTimeLabel.Top -= 22;
+            if (hoverMs > p_bar.Maximum * 0.9) hoverTimeLabel.Left -= 42;
+            hoverTimeLabel.Visible = true;
+            hoverTimeLabel.BringToFront();
+        }
+        private void p_bar_MouseLeave(object sender, EventArgs e) => hoverTimeLabel.Visible = false;
         private void btn_nextTrack_Click(object sender, EventArgs e)
         {
             if (paths == null || paths.Length == 0) return;
@@ -442,23 +359,7 @@ namespace wildflower
         }
         private async void btn_shuffleTrack_DoubleClick(object sender, EventArgs e)
         {
-            if (paths == null || paths.Length == 0) return;
-
-            Random rng = new Random();
-            await Task.Run(() =>
-            {
-                for (int i = paths.Length - 1; i > 0; i--)
-                {
-                    int j = rng.Next(i + 1);
-                    (paths[i], paths[j]) = (paths[j], paths[i]);
-                }
-            });
-            SuppressAutoPlay = true;
-            await Helper.TrackListAdd(paths, track_list);
-            SuppressAutoPlay = false;
-            PlayTrack(0);
-            await SavePlaylistToFile();
-            SavePlaybackState();
+            await ShuffleTracksLogic();
             shuffleClickCounter = 0;
         }
         private void btn_shuffleTrack_Click(object sender, EventArgs e)
@@ -480,14 +381,15 @@ namespace wildflower
 
             Options f2 = new Options();
 
-            f2.OpenPressed += (s, args) =>
+            f2.OpenPressed += async (s, args) =>
             {
-                btn_open_Click(sender, EventArgs.Empty);
+                await AddPlaylistLogic();
                 PanelEnabledVisible(false);
             };
 
             f2.UpdatePressed += async (s, args) =>
             {
+                if (SuppressAutoPlay) return;
                 if (paths == null || paths.Length == 0)
                 {
                     MessageBox.Show("Nowhere to update from");
@@ -495,7 +397,7 @@ namespace wildflower
                 }
                 PanelEnabledVisible(false);
                 await RefreshPlaylist();
-                SavePlaybackState();
+                await SavePlaybackState();
                 PlayTrack(currentIndex, resumeTimeMs);
             };
 
@@ -522,10 +424,232 @@ namespace wildflower
             };
             LoadFormIntoPanel(f2);
         }
+        private void Form1_Click(object sender, EventArgs e)
+        {
+            if (MainPanelVisibleEnabled)
+            {
+                if (Helper.IsAnimatingButton || Helper.IsAnimatingPanel) return;
+                PanelEnabledVisible(false);
+            }
+        }
+        private void btn_goBack_Click(object sender, EventArgs e)
+        {
+            BassTempIsPlaying = false;
+        }
+        private void track_list_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            int index = track_list.IndexFromPoint(e.Location);
+            if (index != ListBox.NoMatches)
+            {
+                if (track_list.SelectedIndex == currentIndex) return;
+
+                track_list.SelectedIndex = index;
+                PlayTrack(index);
+            }
+        }
+        //WinFormsEventsCode
+        #endregion
+
+        #region Form1Logic
+        //Form1Logic
+
+        #region SongInitLogic
+        //SongInitLogic
+        private async Task LoadEverything()
+        {
+            SuppressAutoPlay = true;
+            if (!File.Exists(musicFolderPath))
+            {
+                MessageBox.Show("Please select a song folder");
+                await AddPlaylistLogic();
+                SuppressAutoPlay = false;
+                return;
+            }
+            if (File.Exists(musicFolderPath) && !File.Exists(playlistSaveFile))
+            {
+                string savedPath = await File.ReadAllTextAsync(musicFolderPath);
+                if (Directory.Exists(savedPath))
+                {
+                    musicFolder = savedPath;
+                    await LoadSongsFromFolder(musicFolder);
+                    SuppressAutoPlay = false;
+                    await ShuffleTracksLogic();
+                }
+            }
+            if (File.Exists(playbackStateFile) && File.Exists(playlistSaveFile))
+            {
+                await LoadPlaylistFromFile(playlistSaveFile);
+                var part = await File.ReadAllTextAsync(playbackStateFile);
+                var parts = part.Split('|');
+                if (parts.Length == 2 &&
+                    int.TryParse(parts[0], out int index) &&
+                    long.TryParse(parts[1], out long time))
+                {
+                    currentIndex = index;
+                    resumeTimeMs = time;
+                    await RefreshPlaylist();
+                    SuppressAutoPlay = false;
+                    PlayTrack(currentIndex, resumeTimeMs);
+                }
+            }
+            await SavePlaybackState();
+        }
+        private async Task InitializePlaylistPath()
+        {
+            string lastUsedFile = Path.Combine(playlistsDir, "lastUsed.txt");
+
+            if (!Directory.Exists(playlistsDir))
+                Directory.CreateDirectory(playlistsDir);
+
+            string[] allPlaylists = Directory.GetDirectories(playlistsDir);
+
+            string validPlaylistIndex = null;
+
+            // 1. Check lastUsed.txt
+            if (File.Exists(lastUsedFile))
+            {
+                string lastUsedFileData = await File.ReadAllTextAsync(lastUsedFile);
+                string savedIndex = lastUsedFileData.Trim();
+                string savedPath = Path.Combine(playlistsDir, savedIndex);
+                if (Directory.Exists(savedPath) && File.Exists(Path.Combine(savedPath, "musicFolderPath.txt")))
+                {
+                    validPlaylistIndex = savedIndex;
+                }
+            }
+
+            // 2. If lastUsed is missing/invalid, find first valid playlist
+            if (validPlaylistIndex == null)
+            {
+                foreach (string dir in allPlaylists)
+                {
+                    if (File.Exists(Path.Combine(dir, "musicFolderPath.txt")))
+                    {
+                        validPlaylistIndex = Path.GetFileName(dir);
+                        break;
+                    }
+                }
+            }
+
+            // 3. If none found, ask user to select a folder
+            if (validPlaylistIndex == null)
+            {
+                MessageBox.Show("No valid playlist found. Please select a folder.");
+                await AddPlaylistLogic();
+                return;
+            }
+
+            // 4. Save and assign
+            await File.WriteAllTextAsync(lastUsedFile, validPlaylistIndex);
+            basePlaylistPath = Path.Combine(playlistsDir, validPlaylistIndex);
+        }
+        private async Task LoadPlaylistFromFile(string playlistFilePath)
+        {
+            if (!File.Exists(playlistFilePath)) return;
+            var lines = await File.ReadAllLinesAsync(playlistFilePath);
+            paths = lines.ToArray();
+        }
+        private async Task LoadSongsFromFolder(string folderPath)
+        {
+            await Task.Run(() =>
+                paths = Directory
+                    .GetFiles(folderPath, "*.*", SearchOption.TopDirectoryOnly)
+                    .Where(f => f.EndsWith(".mp3") ||
+                    f.EndsWith(".wav") ||
+                    f.EndsWith(".flac") ||
+                    f.EndsWith(".ogg"))
+                    .ToArray());
+            SuppressAutoPlay = true;
+            await Helper.TrackListAdd(paths, track_list);
+            SuppressAutoPlay = false;
+        }
+        private async Task ShuffleTracksLogic()
+        {
+            if (paths == null || paths.Length == 0) return;
+            Random rng = new Random();
+            await Task.Run(() =>
+            {
+                for (int i = paths.Length - 1; i > 0; i--)
+                {
+                    int j = rng.Next(i + 1);
+                    (paths[i], paths[j]) = (paths[j], paths[i]);
+                }
+            });
+            SuppressAutoPlay = true;
+            await Helper.TrackListAdd(paths, track_list);
+            SuppressAutoPlay = false;
+            PlayTrack(0);
+            await SavePlaylistToFile();
+            await SavePlaybackState();
+        }
+        //SongInitLogic
+        #endregion
+
+        #region SongSaveLogic
+        //SongSaveLogic
+        private async Task SavePlaylistToFile()
+        {
+            if (paths == null || paths.Length == 0) return;
+            await File.WriteAllLinesAsync(playlistSaveFile, paths);
+        }
+        private async Task SavePlaybackState()
+        {
+            if (paths == null || paths.Length == 0) return;
+
+            int index = currentIndex;
+            long time = Bass.BASS_ChannelGetPosition(bassStream);
+            resumeTimeMs = time;
+            track_list.SelectedIndex = currentIndex;
+            await File.WriteAllTextAsync(playbackStateFile, $"{index}|{time}");
+        }
+        //SongSaveLogic
+        #endregion
+
+        //Form1Logic
+        #endregion
+
+        #region OptionsLogic
+        //OptionsLogic
+
+        #region Panel
+        //Panel
+        private void LoadFormIntoPanel(Form childForm)
+        {
+            if (mainPanel.Controls.Count > 0)
+                mainPanel.Controls[0].Dispose();
+            childForm.TopLevel = false;
+            childForm.FormBorderStyle = FormBorderStyle.None;
+            childForm.Dock = DockStyle.Fill;
+            mainPanel.Size = childForm.Size;
+            childForm.BackColor = ColorTranslator.FromHtml("#1f1e33");
+            mainPanel.Controls.Add(childForm);
+            mainPanel.Tag = childForm;
+            PanelEnabledVisible(true);
+            childForm.Show();
+        }
+        private void PanelEnabledVisible(bool value)
+        {
+            MainPanelVisibleEnabled = value;
+            foreach (Control ctrl in this.Controls)
+            {
+                if (ctrl == mainPanel ||
+                    ctrl == this ||
+                    ctrl == btn_goBack ||
+                    ctrl == lbl_loadingtxt)
+                {
+                    continue;
+                }
+                ctrl.Enabled = !value;
+            }
+        }
+        //Panel
+        #endregion
+
+        #region PlayListButtonPressed
+        //PlayListButtonPressed
         private void PlayListButtonPressed()
         {
             Playlists f2 = new Playlists(playlistsDir, Path.GetFileName(basePlaylistPath));
-            f2.Playlist2Play += (e, Playlist2Play) =>
+            f2.Playlist2Play += async (e, Playlist2Play) =>
             {
                 if (Path.GetFileName(basePlaylistPath) == Playlist2Play) return;
                 basePlaylistPath = Path.Combine(playlistsDir, Playlist2Play);
@@ -538,8 +662,8 @@ namespace wildflower
                         track_list.Items.Clear();
                     }
                 }
-                Form1_Load(this, EventArgs.Empty);
-                File.WriteAllText(Path.Combine(playlistsDir, "lastUsed.txt"), Playlist2Play);
+                await LoadEverything();
+                await File.WriteAllTextAsync(Path.Combine(playlistsDir, "lastUsed.txt"), Playlist2Play);
                 PanelEnabledVisible(false);
             };
             f2.CloseRequest += (e, args) =>
@@ -548,6 +672,25 @@ namespace wildflower
             };
             LoadFormIntoPanel(f2);
         }
+        private bool FindAvailablePlaylist()
+        {
+            foreach (string dir in Directory.GetDirectories(playlistsDir))
+            {
+                string existingPathFile = Path.Combine(dir, "musicFolderPath.txt");
+                if (File.Exists(existingPathFile))
+                {
+                    basePlaylistPath = dir;
+                    File.WriteAllText(Path.Combine(playlistsDir, "lastUsed.txt"), Path.GetFileName(dir));
+                    return true;
+                }
+            }
+            return false;
+        }
+        //PlayListButtonPressed
+        #endregion
+
+        #region SearchButtonPressed
+        //SearchButtonPressed
         private void SearchButtonPressed()
         {
             if (paths == null || paths.Length == 0)
@@ -642,68 +785,50 @@ namespace wildflower
             }
             mainPanel.Visible = false;
         }
-        private void btn_goBack_Click(object sender, EventArgs e)
-        {
-            BassTempIsPlaying = false;
-        }
-        private void track_list_MouseDoubleClick(object sender, MouseEventArgs e)
-        {
-            int index = track_list.IndexFromPoint(e.Location);
-            if (index != ListBox.NoMatches)
-            {
-                if (track_list.SelectedIndex == currentIndex) return;
+        //SearchButtonPressed
+        #endregion
 
-                track_list.SelectedIndex = index;
-                PlayTrack(index);
+        #region AddPlaylistLogic
+        //AddPlaylistLogic
+        private async Task AddPlaylistLogic()
+        {
+            FolderBrowserDialog fbd = new FolderBrowserDialog();
+            var fbdShowDialog = fbd.ShowDialog();
+            while (fbdShowDialog != DialogResult.OK && basePlaylistPath == null)
+            {
+                fbdShowDialog = fbd.ShowDialog();
             }
-        }
-        private void InitializePlaylistPath()
-        {
-            string lastUsedFile = Path.Combine(playlistsDir, "lastUsed.txt");
-
-            if (!Directory.Exists(playlistsDir))
-                Directory.CreateDirectory(playlistsDir);
-
-            string[] allPlaylists = Directory.GetDirectories(playlistsDir);
-
-            string validPlaylistIndex = null;
-
-            // 1. Check lastUsed.txt
-            if (File.Exists(lastUsedFile))
+            musicFolder = fbd.SelectedPath;
+            foreach (string dir in Directory.GetDirectories(playlistsDir))
             {
-                string savedIndex = File.ReadAllText(lastUsedFile).Trim();
-                string savedPath = Path.Combine(playlistsDir, savedIndex);
-                if (Directory.Exists(savedPath) && File.Exists(Path.Combine(savedPath, "musicFolderPath.txt")))
+                string existingPathFile = Path.Combine(dir, "musicFolderPath.txt");
+                if (File.Exists(existingPathFile))
                 {
-                    validPlaylistIndex = savedIndex;
-                }
-            }
-
-            // 2. If lastUsed is missing/invalid, find first valid playlist
-            if (validPlaylistIndex == null)
-            {
-                foreach (string dir in allPlaylists)
-                {
-                    if (File.Exists(Path.Combine(dir, "musicFolderPath.txt")))
+                    string existingPath = await File.ReadAllTextAsync(existingPathFile);
+                    if (string.Equals(existingPath, musicFolder, StringComparison.OrdinalIgnoreCase))
                     {
-                        validPlaylistIndex = Path.GetFileName(dir);
-                        break;
+                        MessageBox.Show("This folder is already part of a playlist.", "Duplicate Playlist", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return;
                     }
                 }
             }
+            int nextIndex = 0;
+            while (Directory.Exists(Path.Combine(playlistsDir, nextIndex.ToString())))
+                nextIndex++;
 
-            // 3. If none found, ask user to select a folder
-            if (validPlaylistIndex == null)
-            {
-                MessageBox.Show("No valid playlist found. Please select a folder.");
-                btn_open_Click(this, EventArgs.Empty); // force open
-                return;
-            }
+            string newPlaylistDir = Path.Combine(playlistsDir, nextIndex.ToString());
+            Directory.CreateDirectory(newPlaylistDir);
 
-            // 4. Save and assign
-            File.WriteAllText(lastUsedFile, validPlaylistIndex);
-            basePlaylistPath = Path.Combine(playlistsDir, validPlaylistIndex);
+            await File.WriteAllTextAsync(Path.Combine(playlistsDir, "lastUsed.txt"), nextIndex.ToString());
+
+            await File.WriteAllTextAsync(Path.Combine(newPlaylistDir, "musicFolderPath.txt"), musicFolder);
+            basePlaylistPath = newPlaylistDir;
         }
+        //AddPlaylistLogic
+        #endregion
+
+        #region RefreshPlaylist
+        //RefreshPlaylist
         private async Task RefreshPlaylist()
         {
             musicFolder = await File.ReadAllTextAsync(musicFolderPath);
@@ -711,11 +836,11 @@ namespace wildflower
             {
                 MessageBox.Show("Update your music folder path");
                 RemoveInvalidPlaylists();
-                btn_open_Click(this, EventArgs.Empty);
+                await AddPlaylistLogic();
                 if (paths == null)
                 {
-                    InitializePlaylistPath();
-                    Form1_Load(this, EventArgs.Empty);
+                    await InitializePlaylistPath();
+                    await LoadEverything();
                 }
                 return;
             }
@@ -771,20 +896,6 @@ namespace wildflower
             paths = validPaths.ToArray();
             await File.WriteAllLinesAsync(playlistSaveFile, paths);
         }
-        private bool FindAvailablePlaylist()
-        {
-            foreach (string dir in Directory.GetDirectories(playlistsDir))
-            {
-                string existingPathFile = Path.Combine(dir, "musicFolderPath.txt");
-                if (File.Exists(existingPathFile))
-                {
-                    basePlaylistPath = dir;
-                    File.WriteAllText(Path.Combine(playlistsDir, "lastUsed.txt"), Path.GetFileName(dir));
-                    return true;
-                }
-            }
-            return false;
-        }
         private void RemoveInvalidPlaylists()
         {
             paths = null;
@@ -808,39 +919,36 @@ namespace wildflower
                 }
             }
         }
-        private void LoadFormIntoPanel(Form childForm)
+        //RefreshPlaylist
+        #endregion
+
+        //OptionsLogic
+        #endregion
+
+        #region Extra
+        //Extra
+        private void InitAudioWatcher()
         {
-            if (mainPanel.Controls.Count > 0)
-                mainPanel.Controls[0].Dispose();
-            childForm.TopLevel = false;
-            childForm.FormBorderStyle = FormBorderStyle.None;
-            childForm.Dock = DockStyle.Fill;
-            mainPanel.Size = childForm.Size;
-            childForm.BackColor = ColorTranslator.FromHtml("#1f1e33");
-            mainPanel.Controls.Add(childForm);
-            mainPanel.Tag = childForm;
-            PanelEnabledVisible(true);
-            childForm.Show();
-        }
-        private void PanelEnabledVisible(bool value)
-        {
-            MainPanelVisibleEnabled = value;
-            foreach (Control ctrl in this.Controls)
+            deviceEnumerator = new MMDeviceEnumerator();
+            deviceWatcher = new AudioDeviceWatcher();
+            deviceWatcher.DefaultDeviceChanged += () =>
             {
-                if (ctrl == mainPanel || ctrl == this || ctrl == btn_goBack)
+                if (isPlaying)
                 {
-                    continue;
+                    btn_play_pause_Click(this, EventArgs.Empty); // pause
                 }
-                ctrl.Enabled = !value;
-            }
+            };
+            deviceEnumerator.RegisterEndpointNotificationCallback(deviceWatcher);
         }
-        private void Form1_Click(object sender, EventArgs e)
+        private async void SystemEvents_PowerModeChanged(object sender, PowerModeChangedEventArgs e)
         {
-            if (MainPanelVisibleEnabled)
+            if (e.Mode == PowerModes.Suspend)
             {
-                if (Helper.IsAnimatingButton || Helper.IsAnimatingPanel) return;
-                PanelEnabledVisible(false);
+                await SavePlaybackState();
+                if (isPlaying) btn_play_pause_Click(sender, e);
             }
         }
+        //Extra
+        #endregion
     }
 }

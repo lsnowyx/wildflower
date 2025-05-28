@@ -12,8 +12,8 @@
             InitializeComponent();
             this.playlistsDir = playlistsDir;
             this.currentPlayListNr = currentPlayListNr;
-            btn_PlayPlaylist.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconPlayButton.png"), 50, 50);
-            btn_delPlaylist.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconDeletePlaylist.png"), 50, 50);
+            btn_PlayPlaylist.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconPlayButton.png"), btn_PlayPlaylist.Width, btn_PlayPlaylist.Height);
+            btn_delPlaylist.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconDeletePlaylist.png"), btn_delPlaylist.Width, btn_delPlaylist.Height);
         }
         private void btn_PlayPlaylist_Click(object sender, EventArgs e)
         {
