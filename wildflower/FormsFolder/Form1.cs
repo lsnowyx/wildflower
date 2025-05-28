@@ -263,10 +263,14 @@ namespace wildflower
                 if (isPlaying)
                 {
                     Bass.BASS_ChannelPause(bassStream);
+                    stateTimer.Stop();
+                    timer1.Stop();
                 }
                 if (!isPlaying)
                 {
                     Bass.BASS_ChannelPlay(bassStream, false);
+                    stateTimer.Start();
+                    timer1.Start();
                 }
                 isPlaying = !isPlaying;
             }
@@ -823,6 +827,7 @@ namespace wildflower
 
             await File.WriteAllTextAsync(Path.Combine(newPlaylistDir, "musicFolderPath.txt"), musicFolder);
             basePlaylistPath = newPlaylistDir;
+            await LoadEverything();
         }
         //AddPlaylistLogic
         #endregion
