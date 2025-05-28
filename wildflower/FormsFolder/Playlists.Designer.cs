@@ -78,6 +78,7 @@
             Name = "Playlists";
             Text = "Playlists";
             Load += Playlists_Load;
+            Click += Playlists_Click;
             ((System.ComponentModel.ISupportInitialize)btn_PlayPlaylist).EndInit();
             ((System.ComponentModel.ISupportInitialize)btn_delPlaylist).EndInit();
             ResumeLayout(false);

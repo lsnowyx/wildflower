@@ -1,6 +1,8 @@
 using Microsoft.Win32;
 using NAudio.CoreAudioApi;
 using Un4seen.Bass;
+using wildflower.FormsFolder;
+using wildflower.Models;
 namespace wildflower
 {
     public partial class Form1 : Form
@@ -16,6 +18,7 @@ namespace wildflower
 
         //PlayTrack
         private string[] paths;
+        private int bassStream;
         private int currentIndex = 0;
         private long resumeTimeMs = -1;
         private bool isTransitioning = false;
@@ -58,7 +61,6 @@ namespace wildflower
         //Directories
 
         //BassTempSong
-        private int bassStream;
         private bool bassTempIsPlaying = false;
         private bool BassTempIsPlaying
         {
@@ -73,6 +75,7 @@ namespace wildflower
         //BassTempSong
 
         //UI Altering Props
+        private ErrorsPanel errorsPanel;
         private bool mainPanelVisibleEnabledField = false;
         private bool MainPanelVisibleEnabled
         {
@@ -92,6 +95,11 @@ namespace wildflower
                     Helper.AnimateSlideOutToTop(mainPanel);
                 }
                 mainPanel.Enabled = value;
+                foreach (var ctrl in Controls.OfType<UserControl>().ToList())
+                {
+                    Controls.Remove(ctrl);
+                    ctrl.Dispose();
+                }
             }
         }
         private bool suppressAutoPlayField = true;
@@ -368,7 +376,9 @@ namespace wildflower
             if (shuffleClickCounter > 2)
             {
                 shuffleClickCounter = 0;
-                MessageBox.Show("Shuffle works only on doubleclick");
+
+                ShowErrorsPanel("Shuffle works only on doubleclick");
+                //MessageBox.Show("Shuffle works only on doubleclick");
             }
         }
         private void btn_options_Click(object sender, EventArgs e)
@@ -392,7 +402,9 @@ namespace wildflower
                 if (SuppressAutoPlay) return;
                 if (paths == null || paths.Length == 0)
                 {
-                    MessageBox.Show("Nowhere to update from");
+                    //MessageBox.Show("Nowhere to update from");
+                    ShowErrorsPanel("Nowhere to update from");
+
                     return;
                 }
                 PanelEnabledVisible(false);
@@ -431,6 +443,11 @@ namespace wildflower
                 if (Helper.IsAnimatingButton || Helper.IsAnimatingPanel) return;
                 PanelEnabledVisible(false);
             }
+            if (errorsPanel == null) return;
+            PanelEnabledVisible(false, this);
+            Controls.Remove(errorsPanel);
+            errorsPanel.Dispose();
+            errorsPanel = null;
         }
         private void btn_goBack_Click(object sender, EventArgs e)
         {
@@ -460,7 +477,8 @@ namespace wildflower
             SuppressAutoPlay = true;
             if (!File.Exists(musicFolderPath))
             {
-                MessageBox.Show("Please select a song folder");
+                //MessageBox.Show("Please select a song folder");
+                ShowErrorsPanel("Please select a song folder");
                 await AddPlaylistLogic();
                 SuppressAutoPlay = false;
                 return;
@@ -533,7 +551,8 @@ namespace wildflower
             // 3. If none found, ask user to select a folder
             if (validPlaylistIndex == null)
             {
-                MessageBox.Show("No valid playlist found. Please select a folder.");
+                //MessageBox.Show("No valid playlist found. Please select a folder.");
+                ShowErrorsPanel("No valid playlist found.\nPlease select a folder.");
                 await AddPlaylistLogic();
                 return;
             }
@@ -612,6 +631,30 @@ namespace wildflower
 
         #region Panel
         //Panel
+        private void ShowErrorsPanel(string errorMsg, ErrorAudio errorAudio = ErrorAudio.TexasINFO, EventHandler callback = null)
+        {
+            errorsPanel = new ErrorsPanel(
+                errorMsg,
+                errorAudio, Size);
+            Controls.Add(errorsPanel);
+            errorsPanel.BringToFront();
+            PanelEnabledVisible(true, this);
+            if (errorAudio == ErrorAudio.TexasINFO) callback = Form1_Click;
+            //EventHandler handler = null;
+            //handler = (s, e) =>
+            //{
+            //    if (errorsPanel == null) return;
+            //    PanelEnabledVisible(false, this);
+            //    Controls.Remove(errorsPanel);
+            //    errorsPanel.Dispose();
+            //    errorsPanel = null;
+            //    this.Click -= handler;
+            //};
+            //this.Click += handler;
+            //errorsPanel.CloseRequest += handler;
+            errorsPanel.CloseRequest += callback;
+        }
+
         private void LoadFormIntoPanel(Form childForm)
         {
             if (mainPanel.Controls.Count > 0)
@@ -626,16 +669,25 @@ namespace wildflower
             PanelEnabledVisible(true);
             childForm.Show();
         }
-        private void PanelEnabledVisible(bool value)
+        public void PanelEnabledVisible(bool value, Form form = null)
         {
-            MainPanelVisibleEnabled = value;
-            foreach (Control ctrl in this.Controls)
+            if (form == null)
+            {
+                form = this;
+                MainPanelVisibleEnabled = value;
+            }
+            foreach (Control ctrl in form.Controls)
             {
                 if (ctrl == mainPanel ||
                     ctrl == this ||
                     ctrl == btn_goBack ||
                     ctrl == lbl_loadingtxt)
                 {
+                    continue;
+                }
+                if (ctrl is UserControl)
+                {
+                    ctrl.Enabled = true;
                     continue;
                 }
                 ctrl.Enabled = !value;
@@ -648,7 +700,7 @@ namespace wildflower
         //PlayListButtonPressed
         private void PlayListButtonPressed()
         {
-            Playlists f2 = new Playlists(playlistsDir, Path.GetFileName(basePlaylistPath));
+            Playlists f2 = new Playlists(playlistsDir, Path.GetFileName(basePlaylistPath), this);
             f2.Playlist2Play += async (e, Playlist2Play) =>
             {
                 if (Path.GetFileName(basePlaylistPath) == Playlist2Play) return;
@@ -657,7 +709,8 @@ namespace wildflower
                 {
                     if (!FindAvailablePlaylist())
                     {
-                        MessageBox.Show("All playlists have been deleted");
+                        //MessageBox.Show("All playlists have been deleted");
+                        ShowErrorsPanel("All playlists have been deleted");
                         paths = null;
                         track_list.Items.Clear();
                     }
@@ -695,7 +748,8 @@ namespace wildflower
         {
             if (paths == null || paths.Length == 0)
             {
-                MessageBox.Show("Nowhere to search from");
+                //MessageBox.Show("Nowhere to search from");
+                ShowErrorsPanel("Nowhere to search from");
                 return;
             }
             Search f2 = new Search(paths);
@@ -798,6 +852,7 @@ namespace wildflower
             {
                 fbdShowDialog = fbd.ShowDialog();
             }
+            if (fbdShowDialog != DialogResult.OK) return;
             musicFolder = fbd.SelectedPath;
             foreach (string dir in Directory.GetDirectories(playlistsDir))
             {
@@ -807,7 +862,8 @@ namespace wildflower
                     string existingPath = await File.ReadAllTextAsync(existingPathFile);
                     if (string.Equals(existingPath, musicFolder, StringComparison.OrdinalIgnoreCase))
                     {
-                        MessageBox.Show("This folder is already part of a playlist.", "Duplicate Playlist", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        //MessageBox.Show("This folder is already part of a playlist.", "Duplicate Playlist", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        ShowErrorsPanel("Duplicate Playlist!\nThis folder is already part of a playlist.");
                         return;
                     }
                 }
@@ -823,6 +879,7 @@ namespace wildflower
 
             await File.WriteAllTextAsync(Path.Combine(newPlaylistDir, "musicFolderPath.txt"), musicFolder);
             basePlaylistPath = newPlaylistDir;
+            await LoadEverything();
         }
         //AddPlaylistLogic
         #endregion
@@ -834,7 +891,8 @@ namespace wildflower
             musicFolder = await File.ReadAllTextAsync(musicFolderPath);
             if (string.IsNullOrEmpty(musicFolder) || !Directory.Exists(musicFolder))
             {
-                MessageBox.Show("Update your music folder path");
+                //MessageBox.Show("Update your music folder path");
+                ShowErrorsPanel("Update your music folder path");
                 RemoveInvalidPlaylists();
                 await AddPlaylistLogic();
                 if (paths == null)
@@ -913,7 +971,8 @@ namespace wildflower
                         }
                         catch (Exception ex)
                         {
-                            MessageBox.Show($"Could not delete playlist folder '{playlistDir}': {ex.Message}");
+                            ShowErrorsPanel($"Could not delete playlist folder\n'{playlistDir}': {ex.Message}");
+                            //MessageBox.Show($"Could not delete playlist folder '{playlistDir}': {ex.Message}");
                         }
                     }
                 }
