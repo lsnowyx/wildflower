@@ -312,6 +312,16 @@ namespace wildflower
                 btn_options_Click(this, EventArgs.Empty);
                 return true;
             }
+            if (keyData == Keys.Left)
+            {
+                btn_prevTrack_Click(this, EventArgs.Empty);
+                return true;
+            }
+            if (keyData == Keys.Right)
+            {
+                btn_nextTrack_Click(this, EventArgs.Empty);
+                return true;
+            }
             return base.ProcessCmdKey(ref msg, keyData);
         }
         private async void Form1_Load(object sender, EventArgs e)
