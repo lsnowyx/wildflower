@@ -95,7 +95,7 @@ namespace wildflower
             }
         }
         private bool suppressAutoPlayField = true;
-        private bool SuppressAutoPlay
+        public bool SuppressAutoPlay
         {
             get => suppressAutoPlayField; set
             {
@@ -208,6 +208,7 @@ namespace wildflower
                 Bass.BASS_ChannelIsActive(bassStream) != BASSActive.BASS_ACTIVE_STOPPED &&
                 !SuppressAutoPlay)
             {
+                RemoveGhostPanel();
                 long pos = Bass.BASS_ChannelGetPosition(bassStream);
                 long len = Bass.BASS_ChannelGetLength(bassStream);
 
@@ -297,7 +298,7 @@ namespace wildflower
                 btn_options_Click(this, EventArgs.Empty);
                 return true;
             }
-            if(SuppressAutoPlay)
+            if (SuppressAutoPlay)
                 return base.ProcessCmdKey(ref msg, keyData);
             if (keyData == Keys.Space)
             {
@@ -624,6 +625,19 @@ namespace wildflower
 
         #region Panel
         //Panel
+        private void RemoveGhostPanel()
+        {
+            if (mainPanel.Visible && !mainPanel.Enabled && !Helper.IsAnimatingPanel)
+            {
+                mainPanel.Visible = false;
+                mainPanel.Enabled = false;
+                PanelEnabledVisible(false);
+            }
+            if (!MainPanelVisibleEnabled && !Helper.IsAnimatingButton && Helper.CurrentAngle != 0f)
+            {
+                Helper.AnimateRotation(btn_options, OptionsBtnAnimationImage, -Helper.CurrentAngle, 10, 10);
+            }
+        }
         private void LoadFormIntoPanel(Form childForm)
         {
             if (mainPanel.Controls.Count > 0)
@@ -663,6 +677,7 @@ namespace wildflower
             Playlists f2 = new Playlists(playlistsDir, Path.GetFileName(basePlaylistPath));
             f2.Playlist2Play += async (e, Playlist2Play) =>
             {
+                if (SuppressAutoPlay) return;
                 if (Path.GetFileName(basePlaylistPath) == Playlist2Play) return;
                 basePlaylistPath = Path.Combine(playlistsDir, Playlist2Play);
                 if (!File.Exists(basePlaylistPath + "\\musicFolderPath.txt"))
@@ -710,7 +725,7 @@ namespace wildflower
                 MessageBox.Show("Nowhere to search from");
                 return;
             }
-            Search f2 = new Search(paths);
+            Search f2 = new Search(paths, this);
             f2.SongToPlay += async (e, songToPlay) =>
             {
                 if (paths == null || songToPlay == null) return;
@@ -810,6 +825,7 @@ namespace wildflower
             {
                 fbdShowDialog = fbd.ShowDialog();
             }
+            if (fbdShowDialog != DialogResult.OK) return;
             musicFolder = fbd.SelectedPath;
             foreach (string dir in Directory.GetDirectories(playlistsDir))
             {

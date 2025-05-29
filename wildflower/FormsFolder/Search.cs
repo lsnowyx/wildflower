@@ -3,19 +3,22 @@
     public partial class Search : Form
     {
         private string[] paths;
+        private readonly Form1 form1;
         private string[] validSearches;
         public event EventHandler<string> SongToPlay;
         public event EventHandler CloseRequest;
-        public Search(string[] paths)
+        public Search(string[] paths, Form1 form1)
         {
             InitializeComponent();
             btn_searchTrack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconFindTrack.png"), btn_searchTrack.Width, btn_searchTrack.Height);
             btn_Play.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconPlayButton.png"), btn_Play.Width, btn_Play.Height);
             this.paths = paths;
+            this.form1 = form1;
         }
         private async void btn_searchTrack_Click(object sender, EventArgs e)
         {
             if (this.txbx_search.Text == string.Empty) return;
+            if (form1.SuppressAutoPlay) return;
             var getMatchingElements = await GetMatchingElements(paths, this.txbx_search.Text);
             validSearches = getMatchingElements.ToArray();
             await Helper.TrackListAdd(validSearches, track_list);

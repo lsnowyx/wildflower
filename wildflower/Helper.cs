@@ -2,7 +2,7 @@
 {
     public static class Helper
     {
-        private static float currentAngle = 0;
+        public static float CurrentAngle { get; set; } = 0;
         public static bool IsAnimatingButton { get; private set; } = false;
         public static bool IsAnimatingPanel { get; private set; } = false;
         public static string IconsPath { get; set; } = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "icons\\");
@@ -21,8 +21,8 @@
             if (IsAnimatingButton) return;
             IsAnimatingButton = true;
 
-            float startAngle = currentAngle;
-            float targetAngle = currentAngle + deltaAngle;
+            float startAngle = CurrentAngle;
+            float targetAngle = CurrentAngle + deltaAngle;
 
             for (int i = 1; i <= steps; i++)
             {
@@ -32,7 +32,7 @@
 
                 await Task.Delay(delayMs);
             }
-            currentAngle = targetAngle % 360;
+            CurrentAngle = targetAngle % 360;
             IsAnimatingButton = false;
         }
         private static Image RotateImage(Image img, float angle)
