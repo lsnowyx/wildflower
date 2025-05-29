@@ -291,6 +291,14 @@ namespace wildflower
         {
             if (MainPanelVisibleEnabled)
                 return base.ProcessCmdKey(ref msg, keyData);
+            if (keyData == Keys.Escape)
+            {
+                if (Helper.IsAnimatingButton || Helper.IsAnimatingPanel) return true;
+                btn_options_Click(this, EventArgs.Empty);
+                return true;
+            }
+            if(SuppressAutoPlay)
+                return base.ProcessCmdKey(ref msg, keyData);
             if (keyData == Keys.Space)
             {
                 btn_play_pause_Click(this, EventArgs.Empty);
@@ -304,12 +312,6 @@ namespace wildflower
             if (keyData == Keys.Escape && BassTempIsPlaying)
             {
                 btn_goBack_Click(this, EventArgs.Empty);
-                return true;
-            }
-            if (keyData == Keys.Escape)
-            {
-                if (Helper.IsAnimatingButton || Helper.IsAnimatingPanel) return true;
-                btn_options_Click(this, EventArgs.Empty);
                 return true;
             }
             if (keyData == Keys.Left)
