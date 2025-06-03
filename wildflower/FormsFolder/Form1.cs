@@ -292,6 +292,11 @@ namespace wildflower
         {
             if (MainPanelVisibleEnabled)
                 return base.ProcessCmdKey(ref msg, keyData);
+            if (keyData == Keys.Escape && BassTempIsPlaying)
+            {
+                btn_goBack_Click(this, EventArgs.Empty);
+                return true;
+            }
             if (keyData == Keys.Escape)
             {
                 if (Helper.IsAnimatingButton || Helper.IsAnimatingPanel) return true;
@@ -308,11 +313,6 @@ namespace wildflower
             if (keyData == Keys.R)
             {
                 btn_loopTrack_Click(this, EventArgs.Empty);
-                return true;
-            }
-            if (keyData == Keys.Escape && BassTempIsPlaying)
-            {
-                btn_goBack_Click(this, EventArgs.Empty);
                 return true;
             }
             if (keyData == Keys.Left)
@@ -338,12 +338,9 @@ namespace wildflower
         private void p_bar_MouseMove(object sender, MouseEventArgs e)
         {
             int hoverMs = p_bar.Maximum * e.X / p_bar.Width;
-            string timeStr = TimeSpan.FromMilliseconds(hoverMs).ToString(@"mm\:ss");
-            hoverTimeLabel.Text = timeStr;
-            hoverTimeLabel.Location = p_bar.PointToScreen(e.Location);
-            hoverTimeLabel.Location = this.PointToClient(hoverTimeLabel.Location);
-            hoverTimeLabel.Top -= 22;
-            if (hoverMs > p_bar.Maximum * 0.9) hoverTimeLabel.Left -= 42;
+            hoverTimeLabel.Text = TimeSpan.FromMilliseconds(hoverMs).ToString(@"mm\:ss");
+            hoverTimeLabel.Location = new Point(e.X, p_bar.Location.Y - hoverTimeLabel.Height);
+            if (hoverMs > p_bar.Maximum * 0.9) hoverTimeLabel.Left -= hoverTimeLabel.Width;
             hoverTimeLabel.Visible = true;
             hoverTimeLabel.BringToFront();
         }
