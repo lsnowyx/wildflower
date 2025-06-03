@@ -339,8 +339,9 @@ namespace wildflower
         {
             int hoverMs = p_bar.Maximum * e.X / p_bar.Width;
             hoverTimeLabel.Text = TimeSpan.FromMilliseconds(hoverMs).ToString(@"mm\:ss");
-            hoverTimeLabel.Location = new Point(e.X, p_bar.Location.Y - hoverTimeLabel.Height);
-            if (hoverMs > p_bar.Maximum * 0.9) hoverTimeLabel.Left -= hoverTimeLabel.Width;
+            int x = e.X;
+            if (hoverMs > p_bar.Maximum * 0.9) x -= hoverTimeLabel.Width;
+            hoverTimeLabel.Location = new Point(x, p_bar.Location.Y - hoverTimeLabel.Height);
             hoverTimeLabel.Visible = true;
             hoverTimeLabel.BringToFront();
         }
