@@ -129,8 +129,8 @@ namespace wildflower
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
 
-            lbl_volume.Text = "30%";
-            track_volume.Value = 30;
+            lbl_volume.Text = "10%";
+            track_volume.Value = 10;
             lbl_track_end.BringToFront();
 
             #region p_barHoverLabelData
