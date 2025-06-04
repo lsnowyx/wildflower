@@ -48,6 +48,7 @@
             mainPanel = new Panel();
             lbl_loadingtxt = new Label();
             msgPanel = new Panel();
+            button1 = new Button();
             ((System.ComponentModel.ISupportInitialize)track_volume).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_play_pause).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_nextTrack).BeginInit();
@@ -233,12 +234,24 @@
             msgPanel.TabIndex = 25;
             msgPanel.Visible = false;
             // 
+            // button1
+            // 
+            button1.ForeColor = Color.Black;
+            button1.Location = new Point(8, 127);
+            button1.Name = "button1";
+            button1.Size = new Size(37, 23);
+            button1.TabIndex = 26;
+            button1.Text = "button1";
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += button1_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.Black;
             ClientSize = new Size(345, 208);
+            Controls.Add(button1);
             Controls.Add(msgPanel);
             Controls.Add(lbl_loadingtxt);
             Controls.Add(mainPanel);
@@ -293,5 +306,6 @@
         private Panel mainPanel;
         private Label lbl_loadingtxt;
         private Panel msgPanel;
+        private Button button1;
     }
 }
