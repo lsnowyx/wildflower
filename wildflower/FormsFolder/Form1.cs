@@ -315,12 +315,12 @@ namespace wildflower
                 btn_loopTrack_Click(this, EventArgs.Empty);
                 return true;
             }
-            if (keyData == Keys.Left)
+            if (keyData == Keys.Left && !BassTempIsPlaying)
             {
                 btn_prevTrack_Click(this, EventArgs.Empty);
                 return true;
             }
-            if (keyData == Keys.Right)
+            if (keyData == Keys.Right && !BassTempIsPlaying)
             {
                 btn_nextTrack_Click(this, EventArgs.Empty);
                 return true;
