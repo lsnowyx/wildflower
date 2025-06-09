@@ -55,6 +55,7 @@ namespace wildflower
         private string musicFolderPath => Path.Combine(basePlaylistPath, "musicFolderPath.txt");
         private string playlistSaveFile => Path.Combine(basePlaylistPath, "playlist.txt");
         private string playbackStateFile => Path.Combine(basePlaylistPath, "state.txt");
+        private bool saveState = true;
         //Directories
 
         //BassTempSong
@@ -201,6 +202,7 @@ namespace wildflower
                     track_list.SelectedIndex = index;
             }
             isPlaying = true;
+            saveState = true;
         }
         private async void timer1_Tick(object sender, EventArgs e)
         {
@@ -277,6 +279,7 @@ namespace wildflower
             int seekMs = p_bar.Maximum * e.X / p_bar.Width;
             long bytePos = Bass.BASS_ChannelSeconds2Bytes(bassStream, seekMs / 1000.0);
             Bass.BASS_ChannelSetPosition(bassStream, bytePos);
+            saveState = true;
         }
         private void track_volume_Scroll(object sender, EventArgs e)
         {
@@ -501,6 +504,7 @@ namespace wildflower
                     await RefreshPlaylist();
                     SuppressAutoPlay = false;
                     PlayTrack(currentIndex, resumeTimeMs);
+                    if (MainPanelVisibleEnabled) btn_play_pause_Click(this, EventArgs.Empty);
                 }
             }
             await SavePlaybackState();
@@ -605,12 +609,22 @@ namespace wildflower
         private async Task SavePlaybackState()
         {
             if (paths == null || paths.Length == 0) return;
-
-            int index = currentIndex;
-            long time = Bass.BASS_ChannelGetPosition(bassStream);
-            resumeTimeMs = time;
             track_list.SelectedIndex = currentIndex;
-            await File.WriteAllTextAsync(playbackStateFile, $"{index}|{time}");
+            if (saveState && !BassTempIsPlaying)
+            {
+                int index = currentIndex;
+                long time = Bass.BASS_ChannelGetPosition(bassStream);
+                resumeTimeMs = time;
+                await File.WriteAllTextAsync(playbackStateFile, $"{index}|{time}");
+            }
+            if (isPlaying)
+            {
+                saveState = true;
+            }
+            else
+            {
+                saveState = false;
+            }
         }
         //SongSaveLogic
         #endregion
