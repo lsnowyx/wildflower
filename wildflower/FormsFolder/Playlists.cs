@@ -42,7 +42,7 @@
             if (deleteClickCounter > 2)
             {
                 deleteClickCounter = 0;
-                MessageBox.Show("Delete works only on doubleclick");
+                MessageBox.Show("Delete works only on doubleclick", "wildflower", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
         private void btn_delPlaylist_DoubleClick(object sender, EventArgs e)
@@ -54,7 +54,7 @@
 
             DialogResult result = MessageBox.Show(
                 $"Are you sure you want to delete playlist ${musicFolder}?",
-                "Confirm Deletion",
+                "wildflower Confirm Deletion",
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning
             );

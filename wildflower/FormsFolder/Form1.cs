@@ -382,7 +382,7 @@ namespace wildflower
             if (shuffleClickCounter > 2)
             {
                 shuffleClickCounter = 0;
-                MessageBox.Show("Shuffle works only on doubleclick");
+                MessageBox.Show("Shuffle works only on doubleclick", "wildflower", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
         private void btn_options_Click(object sender, EventArgs e)
@@ -406,7 +406,7 @@ namespace wildflower
                 if (SuppressAutoPlay) return;
                 if (paths == null || paths.Length == 0)
                 {
-                    MessageBox.Show("Nowhere to update from");
+                    MessageBox.Show("Nowhere to update from", "wildflower", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
                 PanelEnabledVisible(false);
@@ -474,7 +474,7 @@ namespace wildflower
             SuppressAutoPlay = true;
             if (!File.Exists(musicFolderPath))
             {
-                MessageBox.Show("Please select a song folder");
+                MessageBox.Show("Please select a song folder", "wildflower", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 await AddPlaylistLogic();
                 SuppressAutoPlay = false;
                 return;
@@ -548,7 +548,7 @@ namespace wildflower
             // 3. If none found, ask user to select a folder
             if (validPlaylistIndex == null)
             {
-                MessageBox.Show("No valid playlist found. Please select a folder.");
+                MessageBox.Show("No valid playlist found. Please select a folder.", "wildflower", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 await AddPlaylistLogic();
                 return;
             }
@@ -696,7 +696,7 @@ namespace wildflower
                 {
                     if (!FindAvailablePlaylist())
                     {
-                        MessageBox.Show("All playlists have been deleted");
+                        MessageBox.Show("All playlists have been deleted", "wildflower", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         paths = null;
                         track_list.Items.Clear();
                     }
@@ -734,7 +734,7 @@ namespace wildflower
         {
             if (paths == null || paths.Length == 0)
             {
-                MessageBox.Show("Nowhere to search from");
+                MessageBox.Show("Nowhere to search from", "wildflower", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
             Search f2 = new Search(paths, this);
@@ -847,7 +847,7 @@ namespace wildflower
                     string existingPath = await File.ReadAllTextAsync(existingPathFile);
                     if (string.Equals(existingPath, musicFolder, StringComparison.OrdinalIgnoreCase))
                     {
-                        MessageBox.Show("This folder is already part of a playlist.", "Duplicate Playlist", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show("This folder is already part of a playlist.", "wildflower Duplicate Playlist", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         return;
                     }
                 }
@@ -875,7 +875,7 @@ namespace wildflower
             musicFolder = await File.ReadAllTextAsync(musicFolderPath);
             if (string.IsNullOrEmpty(musicFolder) || !Directory.Exists(musicFolder))
             {
-                MessageBox.Show("Update your music folder path");
+                MessageBox.Show("Update your music folder path", "wildflower", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 RemoveInvalidPlaylists();
                 await AddPlaylistLogic();
                 if (paths == null)
@@ -954,7 +954,7 @@ namespace wildflower
                         }
                         catch (Exception ex)
                         {
-                            MessageBox.Show($"Could not delete playlist folder '{playlistDir}': {ex.Message}");
+                            MessageBox.Show($"Could not delete playlist folder '{playlistDir}': {ex.Message}", "wildflower", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                     }
                 }
