@@ -130,8 +130,8 @@ namespace wildflower
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
 
-            lbl_volume.Text = "10%";
-            track_volume.Value = 10;
+            lbl_volume.Text = "30%";
+            track_volume.Value = 30;
             lbl_track_end.BringToFront();
 
             #region p_barHoverLabelData
@@ -187,7 +187,7 @@ namespace wildflower
             }
 
             Bass.BASS_ChannelPlay(bassStream, false);
-            Bass.BASS_ChannelSetAttribute(bassStream, BASSAttribute.BASS_ATTRIB_VOL, (float)Math.Log10(9 * (track_volume.Value / 100f) + 1));
+            Bass.BASS_ChannelSetAttribute(bassStream, BASSAttribute.BASS_ATTRIB_VOL, track_volume.Value / 100f);
             if (track_list.InvokeRequired)
             {
                 track_list.Invoke(() =>
@@ -286,7 +286,7 @@ namespace wildflower
         private void track_volume_Scroll(object sender, EventArgs e)
         {
             lbl_volume.Text = track_volume.Value.ToString() + "%";
-            Bass.BASS_ChannelSetAttribute(bassStream, BASSAttribute.BASS_ATTRIB_VOL, (float)Math.Log10(9 * (track_volume.Value / 100f) + 1));
+            Bass.BASS_ChannelSetAttribute(bassStream, BASSAttribute.BASS_ATTRIB_VOL, track_volume.Value / 100f);
         }
         //MusicLibraryDependentCode
         #endregion
