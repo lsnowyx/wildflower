@@ -201,6 +201,7 @@ namespace wildflower
                 if (index >= 0 && index < track_list.Items.Count)
                     track_list.SelectedIndex = index;
             }
+            track_list.TopIndex = index;
             isPlaying = true;
             saveState = true;
         }
@@ -263,6 +264,7 @@ namespace wildflower
         {
             if (track_list.Items.Count > 0)
             {
+                saveState = true;
                 if (isPlaying)
                 {
                     Bass.BASS_ChannelPause(bassStream);
