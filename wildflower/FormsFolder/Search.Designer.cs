@@ -32,8 +32,10 @@
             btn_searchTrack = new PictureBox();
             track_list = new ListBox();
             btn_Play = new PictureBox();
+            btn_Random = new PictureBox();
             ((System.ComponentModel.ISupportInitialize)btn_searchTrack).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_Play).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)btn_Random).BeginInit();
             SuspendLayout();
             // 
             // txbx_search
@@ -41,7 +43,7 @@
             txbx_search.Location = new Point(6, 13);
             txbx_search.Margin = new Padding(2, 1, 2, 1);
             txbx_search.Name = "txbx_search";
-            txbx_search.Size = new Size(110, 23);
+            txbx_search.Size = new Size(80, 23);
             txbx_search.TabIndex = 0;
             // 
             // btn_searchTrack
@@ -74,12 +76,22 @@
             btn_Play.TabStop = false;
             btn_Play.Click += btn_Play_Click;
             // 
+            // btn_Random
+            // 
+            btn_Random.Location = new Point(91, 13);
+            btn_Random.Name = "btn_Random";
+            btn_Random.Size = new Size(23, 23);
+            btn_Random.TabIndex = 21;
+            btn_Random.TabStop = false;
+            btn_Random.Click += btn_Random_Click;
+            // 
             // Search
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.Black;
             ClientSize = new Size(305, 103);
+            Controls.Add(btn_Random);
             Controls.Add(btn_Play);
             Controls.Add(track_list);
             Controls.Add(btn_searchTrack);
@@ -90,6 +102,7 @@
             Load += Search_Load;
             ((System.ComponentModel.ISupportInitialize)btn_searchTrack).EndInit();
             ((System.ComponentModel.ISupportInitialize)btn_Play).EndInit();
+            ((System.ComponentModel.ISupportInitialize)btn_Random).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -100,5 +113,6 @@
         private PictureBox btn_searchTrack;
         private ListBox track_list;
         private PictureBox btn_Play;
+        private PictureBox btn_Random;
     }
 }

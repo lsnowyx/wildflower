@@ -12,6 +12,7 @@
             InitializeComponent();
             btn_searchTrack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconFindTrack.png"), btn_searchTrack.Width, btn_searchTrack.Height);
             btn_Play.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconPlayButton.png"), btn_Play.Width, btn_Play.Height);
+            btn_Random.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconShuffleTrack.png"), btn_Random.Width, btn_Random.Height);
             this.paths = paths;
             this.form1 = form1;
         }
@@ -57,6 +58,11 @@
                 btn_Play_Click(this, EventArgs.Empty);
                 return true;
             }
+            if (keyData == Keys.R)
+            {
+                btn_Random_Click(this, EventArgs.Empty);
+                return true;
+            }
             if (keyData == Keys.Escape)
             {
                 if (Helper.IsAnimatingButton || Helper.IsAnimatingPanel) return true;
@@ -69,6 +75,12 @@
         {
             txbx_search.Focus();
             track_list.BackColor = this.BackColor;
+        }
+        private void btn_Random_Click(object sender, EventArgs e)
+        {
+            Random rng = new Random();
+            SongToPlay?.Invoke(this, paths[rng.Next(0, paths.Length)]);
+            CloseRequest?.Invoke(this, EventArgs.Empty);
         }
     }
 }
