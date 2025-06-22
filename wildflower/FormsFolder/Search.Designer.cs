@@ -48,9 +48,9 @@
             // 
             // btn_searchTrack
             // 
-            btn_searchTrack.Location = new Point(8, 42);
+            btn_searchTrack.Location = new Point(91, 13);
             btn_searchTrack.Name = "btn_searchTrack";
-            btn_searchTrack.Size = new Size(50, 50);
+            btn_searchTrack.Size = new Size(23, 23);
             btn_searchTrack.TabIndex = 18;
             btn_searchTrack.TabStop = false;
             btn_searchTrack.Click += btn_searchTrack_Click;
@@ -78,9 +78,9 @@
             // 
             // btn_Random
             // 
-            btn_Random.Location = new Point(91, 13);
+            btn_Random.Location = new Point(8, 42);
             btn_Random.Name = "btn_Random";
-            btn_Random.Size = new Size(23, 23);
+            btn_Random.Size = new Size(50, 50);
             btn_Random.TabIndex = 21;
             btn_Random.TabStop = false;
             btn_Random.Click += btn_Random_Click;

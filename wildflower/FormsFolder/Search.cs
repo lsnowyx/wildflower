@@ -58,7 +58,7 @@
                 btn_Play_Click(this, EventArgs.Empty);
                 return true;
             }
-            if (keyData == Keys.R)
+            if (keyData == Keys.Tab)
             {
                 btn_Random_Click(this, EventArgs.Empty);
                 return true;
@@ -78,6 +78,7 @@
         }
         private void btn_Random_Click(object sender, EventArgs e)
         {
+            if (form1.SuppressAutoPlay) return;
             Random rng = new Random();
             SongToPlay?.Invoke(this, paths[rng.Next(0, paths.Length)]);
             CloseRequest?.Invoke(this, EventArgs.Empty);
