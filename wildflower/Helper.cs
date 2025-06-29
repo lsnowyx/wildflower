@@ -88,30 +88,53 @@
             panel.Visible = false;
             IsAnimatingPanel = false;
         }
-        public static async Task TrackListAdd(string[] paths, ListBox track_list, bool ClearList = true)
+        public static async Task TrackListAdd(string[] paths, ListBox track_list, bool clearList = true)
         {
             if (paths == null || paths.Length == 0)
             {
                 track_list.Items.Clear();
                 return;
             }
-            if (ClearList) track_list.Items.Clear();
-            await Task.Run(() =>
+            if (clearList) track_list.Items.Clear();
+            int iteration = 0;
+            var chunks = paths
+                .Select((item, index) => new { item, index })
+                .GroupBy(x => x.index / 25)
+                .Select(g => g.Select(x => x.item).ToArray())
+                .ToList();
+            var tasks = chunks.Select(chunk =>
             {
-                foreach (var filePath in paths)
+                int order = iteration++;
+                return Task.Run(() =>
                 {
-                    var Metadata = GetMetadataFromFile(filePath);
-                    if (track_list.InvokeRequired)
+                    var metadata = GetMetadataFromArray(chunk);
+                    return (order, metadata);
+                });
+            }).ToList();
+            var results = await Task.WhenAll(tasks);
+            foreach (var (_, metadata) in results.OrderBy(r => r.order))
+            {
+                if (track_list.InvokeRequired)
+                {
+                    track_list.Invoke(() =>
                     {
-                        track_list.Invoke(() =>
-                        track_list.Items.Add(Metadata.title + Metadata.artist));
-                    }
-                    else
-                    {
-                        track_list.Items.Add(Metadata.title + Metadata.artist);
-                    }
+                        foreach (var item in metadata)
+                            track_list.Items.Add(item.title + item.artist);
+                    });
                 }
-            });
+                else
+                {
+                    foreach (var item in metadata)
+                        track_list.Items.Add(item.title + item.artist);
+                }
+            }
+        }
+        private static List<(string title, string artist)> GetMetadataFromArray(string[] paths)
+        {
+            var results = new List<(string title, string artist)>();
+            foreach (var path in paths)
+                results.Add(GetMetadataFromFile(path));
+            return results;
         }
         public static (string title, string artist) GetMetadataFromFile(string filePath)
         {
@@ -131,6 +154,5 @@
                 return (Path.GetFileNameWithoutExtension(filePath), string.Empty);
             }
         }
-        
     }
 }
