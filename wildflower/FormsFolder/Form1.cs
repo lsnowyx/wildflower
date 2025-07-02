@@ -582,6 +582,7 @@ namespace wildflower
         private async Task ShuffleTracksLogic()
         {
             if (paths == null || paths.Length == 0) return;
+            await RefreshPlaylist();
             Random rng = new Random();
             await Task.Run(() =>
             {
