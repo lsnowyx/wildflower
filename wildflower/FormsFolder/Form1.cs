@@ -155,7 +155,7 @@ namespace wildflower
             btn_shuffleTrack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconShuffleTrack.png"), btn_shuffleTrack.Width, btn_shuffleTrack.Height);
             btn_options.Image = OptionsBtnAnimationImage;
             btn_goBack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconGoBack.png"), btn_goBack.Width, btn_goBack.Height);
-            btn_fullSongName.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "fullSongNameIcon.png"), btn_fullSongName.Width, btn_fullSongName.Height);
+            btn_fullSongName.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconFullSongName.png"), btn_fullSongName.Width, btn_fullSongName.Height);
             #endregion
 
             #region Extra
