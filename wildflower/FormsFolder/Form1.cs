@@ -155,6 +155,7 @@ namespace wildflower
             btn_shuffleTrack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconShuffleTrack.png"), btn_shuffleTrack.Width, btn_shuffleTrack.Height);
             btn_options.Image = OptionsBtnAnimationImage;
             btn_goBack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconGoBack.png"), btn_goBack.Width, btn_goBack.Height);
+            btn_fullSongName.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "fullSongNameIcon.png"), btn_fullSongName.Width, btn_fullSongName.Height);
             #endregion
 
             #region Extra
@@ -462,6 +463,33 @@ namespace wildflower
                 track_list.SelectedIndex = index;
                 PlayTrack(index);
             }
+        }
+        private void track_list_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (Helper.IsItemClipped(track_list))
+            {
+                btn_fullSongName.Visible = true;
+            }
+            else
+            {
+                btn_fullSongName.Visible = false;
+            }
+            if (lbl_tempSongName.Text != track_list.Items[track_list.SelectedIndex].ToString())
+            {
+                track_list.Visible = true;
+                lbl_tempSongName.Visible = false;
+            }
+        }
+        private void btn_fullSongName_Click(object sender, EventArgs e)
+        {
+            track_list.Visible = false;
+            lbl_tempSongName.Visible = true;
+            lbl_tempSongName.Text = track_list.Items[track_list.SelectedIndex].ToString();
+        }
+        private void btn_fullSongName_MouseLeave(object sender, EventArgs e)
+        {
+            track_list.Visible = true;
+            lbl_tempSongName.Visible = false;
         }
         //WinFormsEventsCode
         #endregion
