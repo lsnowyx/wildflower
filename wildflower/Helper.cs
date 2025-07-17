@@ -163,7 +163,7 @@
             using (Graphics g = track_list.CreateGraphics())
             {
                 Size textSize = TextRenderer.MeasureText(g, itemText, track_list.Font);
-                int itemWidth = track_list.ClientSize.Width;
+                int itemWidth = track_list.Width - SystemInformation.VerticalScrollBarWidth / 2;
                 return textSize.Width > itemWidth;
             }
         }
