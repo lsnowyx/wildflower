@@ -466,6 +466,7 @@ namespace wildflower
         }
         private void track_list_SelectedIndexChanged(object sender, EventArgs e)
         {
+            if (BassTempIsPlaying) return;
             if (Helper.IsItemClipped(track_list))
             {
                 btn_fullSongName.Visible = true;
@@ -787,6 +788,15 @@ namespace wildflower
         private void TempSongIsPlaying(bool tempSongIsPlaying)
         {
             lbl_tempSongName.Visible = tempSongIsPlaying;
+
+            if (!tempSongIsPlaying)
+            {
+                track_list_SelectedIndexChanged(this, EventArgs.Empty);
+            }
+            else
+            {
+                btn_fullSongName.Visible = false;
+            }
 
             btn_prevTrack.Enabled = !tempSongIsPlaying;
             btn_prevTrack.Visible = !tempSongIsPlaying;
