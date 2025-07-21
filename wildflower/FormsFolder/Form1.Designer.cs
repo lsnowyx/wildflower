@@ -47,7 +47,7 @@
             btn_goBack = new PictureBox();
             mainPanel = new Panel();
             lbl_loadingtxt = new Label();
-            msgPanel = new Panel();
+            btn_fullSongName = new PictureBox();
             ((System.ComponentModel.ISupportInitialize)track_volume).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_play_pause).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_nextTrack).BeginInit();
@@ -56,14 +56,16 @@
             ((System.ComponentModel.ISupportInitialize)btn_shuffleTrack).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_options).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_goBack).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)btn_fullSongName).BeginInit();
             SuspendLayout();
             // 
             // p_bar
             // 
             p_bar.Dock = DockStyle.Bottom;
-            p_bar.Location = new Point(0, 185);
+            p_bar.Location = new Point(0, 395);
+            p_bar.Margin = new Padding(6);
             p_bar.Name = "p_bar";
-            p_bar.Size = new Size(345, 23);
+            p_bar.Size = new Size(641, 49);
             p_bar.TabIndex = 6;
             p_bar.MouseDown += p_bar_MouseDown;
             p_bar.MouseLeave += p_bar_MouseLeave;
@@ -75,20 +77,22 @@
             track_list.BorderStyle = BorderStyle.None;
             track_list.ForeColor = Color.White;
             track_list.FormattingEnabled = true;
-            track_list.ItemHeight = 15;
-            track_list.Location = new Point(163, 12);
+            track_list.Location = new Point(303, 26);
+            track_list.Margin = new Padding(6);
             track_list.Name = "track_list";
-            track_list.Size = new Size(173, 165);
+            track_list.Size = new Size(321, 352);
             track_list.TabIndex = 7;
+            track_list.SelectedIndexChanged += track_list_SelectedIndexChanged;
             track_list.MouseDoubleClick += track_list_MouseDoubleClick;
             // 
             // track_volume
             // 
-            track_volume.Location = new Point(0, 2);
+            track_volume.Location = new Point(0, 4);
+            track_volume.Margin = new Padding(6);
             track_volume.Maximum = 100;
             track_volume.Name = "track_volume";
             track_volume.Orientation = Orientation.Vertical;
-            track_volume.Size = new Size(45, 104);
+            track_volume.Size = new Size(90, 222);
             track_volume.TabIndex = 8;
             track_volume.TickStyle = TickStyle.TopLeft;
             track_volume.Scroll += track_volume_Scroll;
@@ -96,27 +100,30 @@
             // lbl_volume
             // 
             lbl_volume.AutoSize = true;
-            lbl_volume.Location = new Point(0, 105);
+            lbl_volume.Location = new Point(0, 224);
+            lbl_volume.Margin = new Padding(6, 0, 6, 0);
             lbl_volume.Name = "lbl_volume";
-            lbl_volume.Size = new Size(47, 15);
+            lbl_volume.Size = new Size(95, 32);
             lbl_volume.TabIndex = 10;
             lbl_volume.Text = "Volume";
             // 
             // lbl_track_start
             // 
             lbl_track_start.AutoSize = true;
-            lbl_track_start.Location = new Point(0, 170);
+            lbl_track_start.Location = new Point(0, 363);
+            lbl_track_start.Margin = new Padding(6, 0, 6, 0);
             lbl_track_start.Name = "lbl_track_start";
-            lbl_track_start.Size = new Size(34, 15);
+            lbl_track_start.Size = new Size(71, 32);
             lbl_track_start.TabIndex = 11;
             lbl_track_start.Text = "00:00";
             // 
             // lbl_track_end
             // 
             lbl_track_end.AutoSize = true;
-            lbl_track_end.Location = new Point(40, 170);
+            lbl_track_end.Location = new Point(74, 363);
+            lbl_track_end.Margin = new Padding(6, 0, 6, 0);
             lbl_track_end.Name = "lbl_track_end";
-            lbl_track_end.Size = new Size(34, 15);
+            lbl_track_end.Size = new Size(71, 32);
             lbl_track_end.TabIndex = 12;
             lbl_track_end.Text = "00:00";
             // 
@@ -126,45 +133,50 @@
             // 
             // btn_play_pause
             // 
-            btn_play_pause.Location = new Point(107, 71);
+            btn_play_pause.Location = new Point(199, 151);
+            btn_play_pause.Margin = new Padding(6);
             btn_play_pause.Name = "btn_play_pause";
-            btn_play_pause.Size = new Size(50, 50);
+            btn_play_pause.Size = new Size(93, 107);
             btn_play_pause.TabIndex = 15;
             btn_play_pause.TabStop = false;
             btn_play_pause.Click += btn_play_pause_Click;
             // 
             // btn_nextTrack
             // 
-            btn_nextTrack.Location = new Point(107, 127);
+            btn_nextTrack.Location = new Point(199, 271);
+            btn_nextTrack.Margin = new Padding(6);
             btn_nextTrack.Name = "btn_nextTrack";
-            btn_nextTrack.Size = new Size(50, 50);
+            btn_nextTrack.Size = new Size(93, 107);
             btn_nextTrack.TabIndex = 16;
             btn_nextTrack.TabStop = false;
             btn_nextTrack.Click += btn_nextTrack_Click;
             // 
             // btn_prevTrack
             // 
-            btn_prevTrack.Location = new Point(107, 15);
+            btn_prevTrack.Location = new Point(199, 32);
+            btn_prevTrack.Margin = new Padding(6);
             btn_prevTrack.Name = "btn_prevTrack";
-            btn_prevTrack.Size = new Size(50, 50);
+            btn_prevTrack.Size = new Size(93, 107);
             btn_prevTrack.TabIndex = 17;
             btn_prevTrack.TabStop = false;
             btn_prevTrack.Click += btn_prevTrack_Click;
             // 
             // btn_loopTrack
             // 
-            btn_loopTrack.Location = new Point(51, 15);
+            btn_loopTrack.Location = new Point(95, 32);
+            btn_loopTrack.Margin = new Padding(6);
             btn_loopTrack.Name = "btn_loopTrack";
-            btn_loopTrack.Size = new Size(50, 50);
+            btn_loopTrack.Size = new Size(93, 107);
             btn_loopTrack.TabIndex = 18;
             btn_loopTrack.TabStop = false;
             btn_loopTrack.Click += btn_loopTrack_Click;
             // 
             // btn_shuffleTrack
             // 
-            btn_shuffleTrack.Location = new Point(51, 71);
+            btn_shuffleTrack.Location = new Point(95, 151);
+            btn_shuffleTrack.Margin = new Padding(6);
             btn_shuffleTrack.Name = "btn_shuffleTrack";
-            btn_shuffleTrack.Size = new Size(50, 50);
+            btn_shuffleTrack.Size = new Size(93, 107);
             btn_shuffleTrack.TabIndex = 19;
             btn_shuffleTrack.TabStop = false;
             btn_shuffleTrack.Click += btn_shuffleTrack_Click;
@@ -172,9 +184,10 @@
             // 
             // btn_options
             // 
-            btn_options.Location = new Point(51, 127);
+            btn_options.Location = new Point(95, 271);
+            btn_options.Margin = new Padding(6);
             btn_options.Name = "btn_options";
-            btn_options.Size = new Size(50, 50);
+            btn_options.Size = new Size(93, 107);
             btn_options.TabIndex = 21;
             btn_options.TabStop = false;
             btn_options.Click += btn_options_Click;
@@ -186,10 +199,10 @@
             // 
             // lbl_tempSongName
             // 
-            lbl_tempSongName.Location = new Point(157, 30);
-            lbl_tempSongName.Margin = new Padding(2, 0, 2, 0);
+            lbl_tempSongName.Location = new Point(292, 64);
+            lbl_tempSongName.Margin = new Padding(4, 0, 4, 0);
             lbl_tempSongName.Name = "lbl_tempSongName";
-            lbl_tempSongName.Size = new Size(135, 100);
+            lbl_tempSongName.Size = new Size(251, 213);
             lbl_tempSongName.TabIndex = 22;
             lbl_tempSongName.Text = "tempSongName";
             lbl_tempSongName.Visible = false;
@@ -197,9 +210,10 @@
             // btn_goBack
             // 
             btn_goBack.Enabled = false;
-            btn_goBack.Location = new Point(219, 71);
+            btn_goBack.Location = new Point(407, 151);
+            btn_goBack.Margin = new Padding(6);
             btn_goBack.Name = "btn_goBack";
-            btn_goBack.Size = new Size(50, 50);
+            btn_goBack.Size = new Size(93, 107);
             btn_goBack.TabIndex = 23;
             btn_goBack.TabStop = false;
             btn_goBack.Visible = false;
@@ -208,38 +222,43 @@
             // mainPanel
             // 
             mainPanel.Enabled = false;
-            mainPanel.Location = new Point(174, 127);
+            mainPanel.Location = new Point(323, 271);
+            mainPanel.Margin = new Padding(6);
             mainPanel.Name = "mainPanel";
-            mainPanel.Size = new Size(32, 50);
+            mainPanel.Size = new Size(59, 107);
             mainPanel.TabIndex = 24;
             mainPanel.Visible = false;
             // 
             // lbl_loadingtxt
             // 
             lbl_loadingtxt.AutoSize = true;
-            lbl_loadingtxt.Location = new Point(219, 53);
+            lbl_loadingtxt.Location = new Point(407, 113);
+            lbl_loadingtxt.Margin = new Padding(6, 0, 6, 0);
             lbl_loadingtxt.Name = "lbl_loadingtxt";
-            lbl_loadingtxt.Size = new Size(59, 15);
+            lbl_loadingtxt.Size = new Size(114, 32);
             lbl_loadingtxt.TabIndex = 25;
             lbl_loadingtxt.Text = "Loading...";
             lbl_loadingtxt.Visible = false;
             // 
-            // msgPanel
+            // btn_fullSongName
             // 
-            msgPanel.Enabled = false;
-            msgPanel.Location = new Point(212, 127);
-            msgPanel.Name = "msgPanel";
-            msgPanel.Size = new Size(32, 50);
-            msgPanel.TabIndex = 25;
-            msgPanel.Visible = false;
+            btn_fullSongName.Location = new Point(0, 262);
+            btn_fullSongName.Margin = new Padding(6);
+            btn_fullSongName.Name = "btn_fullSongName";
+            btn_fullSongName.Size = new Size(93, 107);
+            btn_fullSongName.TabIndex = 26;
+            btn_fullSongName.TabStop = false;
+            btn_fullSongName.Visible = false;
+            btn_fullSongName.Click += btn_fullSongName_Click;
+            btn_fullSongName.MouseLeave += btn_fullSongName_MouseLeave;
             // 
             // Form1
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleDimensions = new SizeF(13F, 32F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.Black;
-            ClientSize = new Size(345, 208);
-            Controls.Add(msgPanel);
+            ClientSize = new Size(641, 444);
+            Controls.Add(btn_fullSongName);
             Controls.Add(lbl_loadingtxt);
             Controls.Add(mainPanel);
             Controls.Add(btn_goBack);
@@ -257,6 +276,7 @@
             Controls.Add(track_list);
             Controls.Add(p_bar);
             ForeColor = Color.White;
+            Margin = new Padding(6);
             Name = "Form1";
             Text = "wildflower";
             Load += Form1_Load;
@@ -269,6 +289,7 @@
             ((System.ComponentModel.ISupportInitialize)btn_shuffleTrack).EndInit();
             ((System.ComponentModel.ISupportInitialize)btn_options).EndInit();
             ((System.ComponentModel.ISupportInitialize)btn_goBack).EndInit();
+            ((System.ComponentModel.ISupportInitialize)btn_fullSongName).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -292,6 +313,6 @@
         private PictureBox btn_goBack;
         private Panel mainPanel;
         private Label lbl_loadingtxt;
-        private Panel msgPanel;
+        private PictureBox btn_fullSongName;
     }
 }

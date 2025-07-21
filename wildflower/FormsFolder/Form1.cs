@@ -155,6 +155,7 @@ namespace wildflower
             btn_shuffleTrack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconShuffleTrack.png"), btn_shuffleTrack.Width, btn_shuffleTrack.Height);
             btn_options.Image = OptionsBtnAnimationImage;
             btn_goBack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconGoBack.png"), btn_goBack.Width, btn_goBack.Height);
+            btn_fullSongName.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconFullSongName.png"), btn_fullSongName.Width, btn_fullSongName.Height);
             #endregion
 
             #region Extra
@@ -419,20 +420,22 @@ namespace wildflower
 
             f2.SearchPressed += (s, args) =>
             {
-                if (isPlaying)
-                {
-                    btn_play_pause_Click(sender, EventArgs.Empty);
-                }
                 SearchButtonPressed();
             };
 
             f2.PlaylistPressed += (s, args) =>
             {
-                if (isPlaying)
-                {
-                    btn_play_pause_Click(sender, EventArgs.Empty);
-                }
                 PlayListButtonPressed();
+            };
+            f2.OpenSaveFolderPressed += (s, args) =>
+            {
+                if (!Directory.Exists(basePlaylistPath))
+                {
+                    MessageBox.Show("No playlist folder selected", "wildflower", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+                System.Diagnostics.Process.Start("explorer.exe", basePlaylistPath);
+                PanelEnabledVisible(false);
             };
             f2.CloseRequest += (e, args) =>
             {
@@ -463,6 +466,34 @@ namespace wildflower
                 PlayTrack(index);
             }
         }
+        private void track_list_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (BassTempIsPlaying) return;
+            if (Helper.IsItemClipped(track_list))
+            {
+                btn_fullSongName.Visible = true;
+            }
+            else
+            {
+                btn_fullSongName.Visible = false;
+            }
+            if (lbl_tempSongName.Text != track_list.Items[track_list.SelectedIndex].ToString())
+            {
+                track_list.Visible = true;
+                lbl_tempSongName.Visible = false;
+            }
+        }
+        private void btn_fullSongName_Click(object sender, EventArgs e)
+        {
+            track_list.Visible = false;
+            lbl_tempSongName.Visible = true;
+            lbl_tempSongName.Text = track_list.Items[track_list.SelectedIndex].ToString();
+        }
+        private void btn_fullSongName_MouseLeave(object sender, EventArgs e)
+        {
+            track_list.Visible = true;
+            lbl_tempSongName.Visible = false;
+        }
         //WinFormsEventsCode
         #endregion
 
@@ -481,9 +512,9 @@ namespace wildflower
                 SuppressAutoPlay = false;
                 return;
             }
-            if (File.Exists(musicFolderPath) && !File.Exists(playlistSaveFile))
+            string savedPath = await File.ReadAllTextAsync(musicFolderPath);
+            if (!File.Exists(playlistSaveFile))
             {
-                string savedPath = await File.ReadAllTextAsync(musicFolderPath);
                 if (Directory.Exists(savedPath))
                 {
                     musicFolder = savedPath;
@@ -494,7 +525,7 @@ namespace wildflower
             }
             if (File.Exists(playbackStateFile) && File.Exists(playlistSaveFile))
             {
-                await LoadPlaylistFromFile(playlistSaveFile);
+                await LoadPlaylistFromFile(playlistSaveFile, savedPath);
                 var part = await File.ReadAllTextAsync(playbackStateFile);
                 var parts = part.Split('|');
                 if (parts.Length == 2 &&
@@ -559,11 +590,10 @@ namespace wildflower
             await File.WriteAllTextAsync(lastUsedFile, validPlaylistIndex);
             basePlaylistPath = Path.Combine(playlistsDir, validPlaylistIndex);
         }
-        private async Task LoadPlaylistFromFile(string playlistFilePath)
+        private async Task LoadPlaylistFromFile(string playlistFilePath, string savedPath)
         {
-            if (!File.Exists(playlistFilePath)) return;
             var lines = await File.ReadAllLinesAsync(playlistFilePath);
-            paths = lines.ToArray();
+            paths = lines.Select(line => Path.Combine(savedPath, line)).ToArray();
         }
         private async Task LoadSongsFromFolder(string folderPath)
         {
@@ -607,7 +637,8 @@ namespace wildflower
         private async Task SavePlaylistToFile()
         {
             if (paths == null || paths.Length == 0) return;
-            await File.WriteAllLinesAsync(playlistSaveFile, paths);
+            var fileNames = paths.Select(p => Path.GetFileName(p));
+            await File.WriteAllLinesAsync(playlistSaveFile, fileNames);
         }
         private async Task SavePlaybackState()
         {
@@ -697,7 +728,7 @@ namespace wildflower
                 basePlaylistPath = Path.Combine(playlistsDir, Playlist2Play);
                 if (!File.Exists(basePlaylistPath + "\\musicFolderPath.txt"))
                 {
-                    if (!FindAvailablePlaylist())
+                    if (!(await FindAvailablePlaylist()))
                     {
                         MessageBox.Show("All playlists have been deleted", "wildflower", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         paths = null;
@@ -714,7 +745,7 @@ namespace wildflower
             };
             LoadFormIntoPanel(f2);
         }
-        private bool FindAvailablePlaylist()
+        private async Task<bool> FindAvailablePlaylist()
         {
             foreach (string dir in Directory.GetDirectories(playlistsDir))
             {
@@ -722,7 +753,7 @@ namespace wildflower
                 if (File.Exists(existingPathFile))
                 {
                     basePlaylistPath = dir;
-                    File.WriteAllText(Path.Combine(playlistsDir, "lastUsed.txt"), Path.GetFileName(dir));
+                    await File.WriteAllTextAsync(Path.Combine(playlistsDir, "lastUsed.txt"), Path.GetFileName(dir));
                     return true;
                 }
             }
@@ -759,6 +790,15 @@ namespace wildflower
         private void TempSongIsPlaying(bool tempSongIsPlaying)
         {
             lbl_tempSongName.Visible = tempSongIsPlaying;
+
+            if (!tempSongIsPlaying)
+            {
+                track_list_SelectedIndexChanged(this, EventArgs.Empty);
+            }
+            else
+            {
+                btn_fullSongName.Visible = false;
+            }
 
             btn_prevTrack.Enabled = !tempSongIsPlaying;
             btn_prevTrack.Visible = !tempSongIsPlaying;
@@ -907,7 +947,7 @@ namespace wildflower
             SuppressAutoPlay = true;
             await Helper.TrackListAdd(newSongs.ToArray(), track_list, false);
             SuppressAutoPlay = false;
-            await File.WriteAllLinesAsync(playlistSaveFile, paths);
+            await SavePlaylistToFile();
         }
         private async Task CleanMissingTracks()
         {
@@ -938,7 +978,7 @@ namespace wildflower
             SuppressAutoPlay = false;
             currentIndex = Math.Max(0, currentIndex - removedBeforeCurrent);
             paths = validPaths.ToArray();
-            await File.WriteAllLinesAsync(playlistSaveFile, paths);
+            await SavePlaylistToFile();
         }
         private void RemoveInvalidPlaylists()
         {
