@@ -420,20 +420,21 @@ namespace wildflower
 
             f2.SearchPressed += (s, args) =>
             {
-                if (isPlaying)
-                {
-                    btn_play_pause_Click(sender, EventArgs.Empty);
-                }
                 SearchButtonPressed();
             };
 
             f2.PlaylistPressed += (s, args) =>
             {
-                if (isPlaying)
-                {
-                    btn_play_pause_Click(sender, EventArgs.Empty);
-                }
                 PlayListButtonPressed();
+            };
+            f2.OpenSaveFolderPressed += (s, args) =>
+            {
+                if (!Directory.Exists(basePlaylistPath))
+                {
+                    MessageBox.Show("No playlist folder selected", "wildflower", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+                System.Diagnostics.Process.Start("explorer.exe", basePlaylistPath);
             };
             f2.CloseRequest += (e, args) =>
             {
