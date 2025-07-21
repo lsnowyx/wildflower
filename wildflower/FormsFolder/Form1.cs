@@ -435,6 +435,7 @@ namespace wildflower
                     return;
                 }
                 System.Diagnostics.Process.Start("explorer.exe", basePlaylistPath);
+                PanelEnabledVisible(false);
             };
             f2.CloseRequest += (e, args) =>
             {
