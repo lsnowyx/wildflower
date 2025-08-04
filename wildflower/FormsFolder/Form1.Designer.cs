@@ -47,7 +47,7 @@
             btn_goBack = new PictureBox();
             mainPanel = new Panel();
             lbl_loadingtxt = new Label();
-            msgPanel = new Panel();
+            btn_fullSongName = new PictureBox();
             ((System.ComponentModel.ISupportInitialize)track_volume).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_play_pause).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_nextTrack).BeginInit();
@@ -56,6 +56,7 @@
             ((System.ComponentModel.ISupportInitialize)btn_shuffleTrack).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_options).BeginInit();
             ((System.ComponentModel.ISupportInitialize)btn_goBack).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)btn_fullSongName).BeginInit();
             SuspendLayout();
             // 
             // p_bar
@@ -80,6 +81,7 @@
             track_list.Name = "track_list";
             track_list.Size = new Size(173, 165);
             track_list.TabIndex = 7;
+            track_list.SelectedIndexChanged += track_list_SelectedIndexChanged;
             track_list.MouseDoubleClick += track_list_MouseDoubleClick;
             // 
             // track_volume
@@ -208,7 +210,7 @@
             // mainPanel
             // 
             mainPanel.Enabled = false;
-            mainPanel.Location = new Point(174, 127);
+            mainPanel.Location = new Point(163, 127);
             mainPanel.Name = "mainPanel";
             mainPanel.Size = new Size(32, 50);
             mainPanel.TabIndex = 24;
@@ -224,14 +226,16 @@
             lbl_loadingtxt.Text = "Loading...";
             lbl_loadingtxt.Visible = false;
             // 
-            // msgPanel
+            // btn_fullSongName
             // 
-            msgPanel.Enabled = false;
-            msgPanel.Location = new Point(212, 127);
-            msgPanel.Name = "msgPanel";
-            msgPanel.Size = new Size(32, 50);
-            msgPanel.TabIndex = 25;
-            msgPanel.Visible = false;
+            btn_fullSongName.Location = new Point(0, 123);
+            btn_fullSongName.Name = "btn_fullSongName";
+            btn_fullSongName.Size = new Size(50, 50);
+            btn_fullSongName.TabIndex = 26;
+            btn_fullSongName.TabStop = false;
+            btn_fullSongName.Visible = false;
+            btn_fullSongName.Click += btn_fullSongName_Click;
+            btn_fullSongName.MouseLeave += btn_fullSongName_MouseLeave;
             // 
             // Form1
             // 
@@ -239,7 +243,7 @@
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.Black;
             ClientSize = new Size(345, 208);
-            Controls.Add(msgPanel);
+            Controls.Add(btn_fullSongName);
             Controls.Add(lbl_loadingtxt);
             Controls.Add(mainPanel);
             Controls.Add(btn_goBack);
@@ -269,6 +273,7 @@
             ((System.ComponentModel.ISupportInitialize)btn_shuffleTrack).EndInit();
             ((System.ComponentModel.ISupportInitialize)btn_options).EndInit();
             ((System.ComponentModel.ISupportInitialize)btn_goBack).EndInit();
+            ((System.ComponentModel.ISupportInitialize)btn_fullSongName).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -292,6 +297,6 @@
         private PictureBox btn_goBack;
         private Panel mainPanel;
         private Label lbl_loadingtxt;
-        private Panel msgPanel;
+        private PictureBox btn_fullSongName;
     }
 }

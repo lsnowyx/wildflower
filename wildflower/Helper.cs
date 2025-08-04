@@ -154,5 +154,18 @@
                 return (Path.GetFileNameWithoutExtension(filePath), string.Empty);
             }
         }
+        public static bool IsItemClipped(ListBox track_list)
+        {
+            if (track_list.SelectedItem == null)
+                return false;
+
+            string itemText = track_list.SelectedItem.ToString();
+            using (Graphics g = track_list.CreateGraphics())
+            {
+                Size textSize = TextRenderer.MeasureText(g, itemText, track_list.Font);
+                int itemWidth = track_list.Width - SystemInformation.VerticalScrollBarWidth / 2;
+                return textSize.Width > itemWidth;
+            }
+        }
     }
 }
