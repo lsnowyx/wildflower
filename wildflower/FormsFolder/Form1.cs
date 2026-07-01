@@ -388,7 +388,12 @@ namespace wildflower
             if (result.TemporaryPlaybackChanged)
                 ApplyTemporaryPlaybackUi(playerSession.IsTemporaryPlayback, result.TemporaryTrackDisplayName);
 
-            SyncPlaybackUi();
+            bool syncTrackSelection = rebuildTrackList ||
+                                      result.TrackListChanged ||
+                                      result.PlaybackChanged ||
+                                      result.TemporaryPlaybackChanged ||
+                                      result.ClearedPlaylist;
+            SyncPlaybackUi(syncTrackSelection);
         }
 
         private async Task RebuildTrackListAsync()
@@ -403,9 +408,11 @@ namespace wildflower
             SuppressAutoPlay = false;
         }
 
-        private void SyncPlaybackUi()
+        private void SyncPlaybackUi(bool syncTrackSelection = true)
         {
-            SyncSelectedTrack();
+            if (syncTrackSelection)
+                SyncSelectedTrack();
+
             UpdatePlayPauseIcon();
             UpdateLoopIcon();
             UpdateProgressUi(playerSession.GetProgress());
