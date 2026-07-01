@@ -49,20 +49,30 @@ namespace wildflower.Services.Session
             return playbackEngine.Initialize();
         }
 
-        public async Task<SessionActionResult> InitializeAsync(Func<Task<string?>> requestMusicFolderAsync)
+        public async Task<PlayerSessionInitializationResult> InitializeAsync()
         {
             CurrentPlaylist = await playlistService.GetLastOrFirstPlaylistAsync();
             if (CurrentPlaylist == null)
             {
-                string? selectedFolder = await requestMusicFolderAsync();
-                if (selectedFolder == null)
-                    return new SessionActionResult(false, Message: "No playlist selected.");
-
-                return await AddPlaylistAsync(selectedFolder);
+                return new PlayerSessionInitializationResult(
+                    PlayerSessionInitializationStatus.NeedsMusicFolder,
+                    SessionActionResult.NoChange,
+                    "No playlist selected.");
             }
 
             await playlistService.SaveLastUsedPlaylistAsync(CurrentPlaylist);
-            return NotifyFromResult(await LoadCurrentPlaylistAsync());
+            SessionActionResult loadResult = NotifyFromResult(await LoadCurrentPlaylistAsync());
+            PlayerSessionInitializationStatus status = loadResult switch
+            {
+                { MissingMusicFolder: true } => PlayerSessionInitializationStatus.NeedsMusicFolder,
+                { Succeeded: true } => PlayerSessionInitializationStatus.Loaded,
+                _ => PlayerSessionInitializationStatus.Failed
+            };
+
+            return new PlayerSessionInitializationResult(
+                status,
+                loadResult,
+                loadResult.Message);
         }
 
         public Task<IReadOnlyList<PlaylistInfo>> GetPlaylistsAsync()

@@ -191,7 +191,7 @@ namespace wildflower
 
         private async void Form1_Load(object sender, EventArgs e)
         {
-            SessionActionResult result = await playerSession.InitializeAsync(() => PromptForMusicFolderAsync(requireSelection: true));
+            SessionActionResult result = await InitializePlayerSessionAsync();
             await ApplySessionResultAsync(result, rebuildTrackList: true);
             stateTimer.Start();
             timer1.Start();
@@ -406,6 +406,48 @@ namespace wildflower
                 track_list.Items.Add(displayName);
 
             SuppressAutoPlay = false;
+        }
+
+        private async Task<SessionActionResult> InitializePlayerSessionAsync()
+        {
+            PlayerSessionInitializationResult initializationResult = await playerSession.InitializeAsync();
+            if (initializationResult.Loaded)
+                return initializationResult.SessionResult;
+
+            if (initializationResult.Failed)
+            {
+                MessageBox.Show(
+                    initializationResult.Message ?? "Could not initialize the player session.",
+                    "wildflower",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                return initializationResult.SessionResult;
+            }
+
+            if (initializationResult.SessionResult.MissingMusicFolder)
+            {
+                MessageBox.Show(
+                    initializationResult.Message ?? "Update your music folder path",
+                    "wildflower",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+
+            string? musicFolder = await PromptForMusicFolderAsync(requireSelection: true);
+            if (musicFolder == null)
+                return new SessionActionResult(false, Message: "No playlist selected.");
+
+            SessionActionResult addResult = await playerSession.AddPlaylistAsync(musicFolder);
+            if (!addResult.Succeeded)
+            {
+                MessageBox.Show(
+                    addResult.Message ?? "Could not add playlist.",
+                    "wildflower",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+
+            return addResult;
         }
 
         private void SyncPlaybackUi(bool syncTrackSelection = true)

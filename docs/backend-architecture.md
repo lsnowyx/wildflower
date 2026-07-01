@@ -19,6 +19,7 @@ Models are small data records and enums used by the services and UI:
 - `PlaybackState`: persisted playback state as `CurrentIndex` and `PositionBytes`.
 - `PlaybackProgress`: current position/length in milliseconds and BASS byte positions.
 - `PlayerSessionSnapshot`: UI-friendly read model for the current session, including playlist, tracks, current track, player status, loop mode, byte/second progress, volume, and capability flags.
+- `PlayerSessionInitializationResult` and `PlayerSessionInitializationStatus`: startup result types that tell a frontend whether the session loaded, needs a music folder, or failed.
 - `PlayerStatus`: stopped, playing, or paused.
 - `LoopMode`: currently `Off` or `Track`.
 
@@ -27,6 +28,8 @@ Models are small data records and enums used by the services and UI:
 `IPlayerSessionService` is the main application-facing backend interface. A frontend should usually call this service instead of calling lower-level services directly.
 
 `PlayerSessionService` owns the active playlist workflow, track order, current track index, loop state, temporary playback state, playback progress, playlist refresh, state saving/restoring, and auto-advance behavior. It coordinates the playback engine, playlist service, music scanner, and metadata service.
+
+`InitializeAsync()` is result-based. It does not call a UI folder picker or any UI callback. It returns `PlayerSessionInitializationResult` so the frontend can decide whether to render the loaded session, open its own folder picker, or show an error.
 
 `GetSnapshot()` returns a `PlayerSessionSnapshot` that future frontends can poll or bind to without knowing about BASS, playlist files, or WinForms controls. It is synchronous and intended to be safe for frequent UI reads. Command failures still come back through `SessionActionResult`; the snapshot represents current state, not the last command error.
 
@@ -86,7 +89,7 @@ The UI is allowed to call:
 - `ISearchService` for search result lists.
 - `IMetadataService` when the UI needs display metadata.
 - `IPlaylistService` for playlist management screens when session-level methods are not enough.
-- Model types such as `PlaylistInfo`, `TrackInfo`, `PlayerSessionSnapshot`, `PlaybackProgress`, and `PlaybackState`.
+- Model types such as `PlaylistInfo`, `TrackInfo`, `PlayerSessionSnapshot`, `PlayerSessionInitializationResult`, `PlaybackProgress`, and `PlaybackState`.
 
 The UI must not touch directly:
 
@@ -152,17 +155,23 @@ A MAUI frontend should manually compose the current services or use a lightweigh
 7. Create `PlayerSessionService`.
 8. Subscribe to `SnapshotChanged` and `ProgressChanged` if the UI wants backend notifications.
 9. Call `InitializePlaybackEngine()`.
-10. Call `InitializeAsync(...)`.
+10. Call `InitializeAsync()`.
 
 Event handlers should copy snapshot/progress values into MAUI bindable state on the MAUI UI thread. The backend does not marshal events to a dispatcher.
 
+`InitializeAsync()` returns:
+
+- `Loaded`: the backend loaded the last/first available playlist and restored track/index/byte position.
+- `NeedsMusicFolder`: no usable playlist is available, or the saved playlist points at a missing music folder. The frontend should open its own folder picker.
+- `Failed`: startup failed for another reason. The frontend can display the result message.
+
 ### Loading Last Playlist
 
-`InitializeAsync(...)` loads the last used playlist through `PlaylistService`, loads track paths through storage, reads `state.txt`, refreshes missing/new songs, and restores the saved track and BASS byte position.
+`InitializeAsync()` loads the last used playlist through `PlaylistService`, loads track paths through storage, reads `state.txt`, refreshes missing/new songs, and restores the saved track and BASS byte position.
 
 ### Choosing A Folder
 
-The UI owns the folder picker. The picker should return a selected music folder path string.
+The UI owns the folder picker. The backend does not request folders through callbacks. If initialization returns `NeedsMusicFolder`, the frontend should show its own folder picker and return a selected music folder path string to the backend through playlist creation.
 
 ### Creating A Playlist
 
@@ -335,7 +344,6 @@ Backends own the event notifications. Frontends own the UI-thread marshaling and
 
 - Timers are still UI-owned. WinForms currently owns progress polling, auto-advance polling, and 30-second state saving.
 - Backend session events now exist, but WinForms still mostly calls service methods and manually refreshes controls instead of subscribing to them.
-- Startup still uses `InitializeAsync(Func<Task<string?>> requestMusicFolderAsync)`, which lets backend startup call back into UI folder selection.
 - The audio device watcher is not behind an interface yet.
 - BASS native DLL deployment must be handled carefully in any future MAUI package.
 - Storage uses Windows AppData and Windows path assumptions.
@@ -345,8 +353,7 @@ Backends own the event notifications. Frontends own the UI-thread marshaling and
 
 1. Start using `PlayerSessionSnapshot` as the main UI read model in WinForms and future UI prototypes.
 2. Subscribe WinForms and future UI prototypes to `SnapshotChanged` and `ProgressChanged`.
-3. Replace startup folder-picker callback with a result-based startup flow.
-4. Add `IAudioDeviceWatcher`.
-5. Harden playlist path validation.
-6. Add unit tests with fake playback/storage.
-7. Keep documenting saved-data behavior.
+3. Add `IAudioDeviceWatcher`.
+4. Harden playlist path validation.
+5. Add unit tests with fake playback/storage.
+6. Keep documenting saved-data behavior.

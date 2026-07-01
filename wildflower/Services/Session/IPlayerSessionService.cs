@@ -19,7 +19,7 @@ namespace wildflower.Services.Session
         float Volume { get; }
 
         bool InitializePlaybackEngine();
-        Task<SessionActionResult> InitializeAsync(Func<Task<string?>> requestMusicFolderAsync);
+        Task<PlayerSessionInitializationResult> InitializeAsync();
         Task<IReadOnlyList<PlaylistInfo>> GetPlaylistsAsync();
         Task<SessionActionResult> AddPlaylistAsync(string musicFolderPath);
         Task<SessionActionResult> SelectPlaylistAsync(string playlistId);
