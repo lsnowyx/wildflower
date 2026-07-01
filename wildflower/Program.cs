@@ -18,7 +18,7 @@ namespace wildflower
             if (!createdNew) return;
 
             ApplicationConfiguration.Initialize();
-            Application.Run(new Form1());
+            Application.Run(new Form1(new AudioDeviceWatcher()));
 
             mutex.ReleaseMutex();
         }

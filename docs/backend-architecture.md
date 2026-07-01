@@ -47,6 +47,14 @@ These events are UI-neutral. They do not marshal to any UI thread, so each front
 
 The UI should not know about BASS stream handles or BASS APIs.
 
+### `IAudioDeviceWatcher` / `AudioDeviceWatcher`
+
+`IAudioDeviceWatcher` is a UI-neutral abstraction for default audio output device changes. It exposes `DefaultDeviceChanged`, `Start()`, `Stop()`, and `Dispose()`.
+
+`AudioDeviceWatcher` is the current Windows/NAudio-backed implementation. It owns the `MMDeviceEnumerator` registration and listens for render/console default-device changes. It does not update UI controls directly and does not marshal events to any UI thread.
+
+MAUI on Windows can reuse the current NAudio implementation. Cross-platform MAUI targets would need platform-specific implementations behind the same `IAudioDeviceWatcher` interface.
+
 ### `IPlaylistStorage` / `FilePlaylistStorage`
 
 `IPlaylistStorage` defines physical playlist persistence operations.
@@ -86,6 +94,7 @@ The UI is allowed to call:
 - `IPlayerSessionService` for normal app workflow.
 - `PlayerSessionSnapshot` from `IPlayerSessionService.GetSnapshot()` as the preferred UI read/bind model.
 - `IPlayerSessionService.SnapshotChanged` and `IPlayerSessionService.ProgressChanged` for backend-owned notifications.
+- `IAudioDeviceWatcher` for default audio output device notifications.
 - `ISearchService` for search result lists.
 - `IMetadataService` when the UI needs display metadata.
 - `IPlaylistService` for playlist management screens when session-level methods are not enough.
@@ -95,6 +104,7 @@ The UI must not touch directly:
 
 - BASS APIs or BASS stream handles.
 - `BassPlaybackEngine` internals.
+- NAudio APIs such as `MMDeviceEnumerator` or notification clients.
 - Playlist files such as `lastUsed.txt`, `musicFolderPath.txt`, `playlist.txt`, or `state.txt`.
 - TagLibSharp APIs.
 - Physical storage paths except for display/debug information.
@@ -153,9 +163,11 @@ A MAUI frontend should manually compose the current services or use a lightweigh
 5. Create `BassPlaybackEngine`.
 6. Create `SearchService`.
 7. Create `PlayerSessionService`.
-8. Subscribe to `SnapshotChanged` and `ProgressChanged` if the UI wants backend notifications.
-9. Call `InitializePlaybackEngine()`.
-10. Call `InitializeAsync()`.
+8. Create an `IAudioDeviceWatcher` implementation for the target platform.
+9. Subscribe to `SnapshotChanged` and `ProgressChanged` if the UI wants backend notifications.
+10. Subscribe to `IAudioDeviceWatcher.DefaultDeviceChanged` if the UI wants the current device-change recovery behavior.
+11. Call `InitializePlaybackEngine()`.
+12. Call `InitializeAsync()`.
 
 Event handlers should copy snapshot/progress values into MAUI bindable state on the MAUI UI thread. The backend does not marshal events to a dispatcher.
 
@@ -344,7 +356,7 @@ Backends own the event notifications. Frontends own the UI-thread marshaling and
 
 - Timers are still UI-owned. WinForms currently owns progress polling, auto-advance polling, and 30-second state saving.
 - Backend session events now exist, but WinForms still mostly calls service methods and manually refreshes controls instead of subscribing to them.
-- The audio device watcher is not behind an interface yet.
+- Audio device watching is behind `IAudioDeviceWatcher`, but only the Windows/NAudio implementation exists.
 - BASS native DLL deployment must be handled carefully in any future MAUI package.
 - Storage uses Windows AppData and Windows path assumptions.
 - `Helper` is WinForms-specific and includes icon/image and animation helpers.
@@ -353,7 +365,7 @@ Backends own the event notifications. Frontends own the UI-thread marshaling and
 
 1. Start using `PlayerSessionSnapshot` as the main UI read model in WinForms and future UI prototypes.
 2. Subscribe WinForms and future UI prototypes to `SnapshotChanged` and `ProgressChanged`.
-3. Add `IAudioDeviceWatcher`.
+3. Add non-Windows `IAudioDeviceWatcher` implementations if MAUI targets expand beyond Windows.
 4. Harden playlist path validation.
 5. Add unit tests with fake playback/storage.
 6. Keep documenting saved-data behavior.

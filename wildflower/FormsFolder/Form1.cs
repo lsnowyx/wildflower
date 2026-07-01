@@ -1,5 +1,5 @@
 using Microsoft.Win32;
-using NAudio.CoreAudioApi;
+using wildflower.Services.Audio;
 using wildflower.Services.Library;
 using wildflower.Services.Playback;
 using wildflower.Services.Playlist;
@@ -13,6 +13,7 @@ namespace wildflower
         #region FieldsAndProperties
         private readonly Label hoverTimeLabel = new Label();
         private readonly Image OptionsBtnAnimationImage;
+        private readonly IAudioDeviceWatcher audioDeviceWatcher;
         private readonly IMetadataService metadataService;
         private readonly ISearchService searchService;
         private readonly IPlayerSessionService playerSession;
@@ -62,16 +63,20 @@ namespace wildflower
             }
         }
 
-        private MMDeviceEnumerator deviceEnumerator = null!;
-        private AudioDeviceWatcher deviceWatcher = null!;
         #endregion
 
         public Form1()
+            : this(new AudioDeviceWatcher())
+        {
+        }
+
+        public Form1(IAudioDeviceWatcher audioDeviceWatcher)
         {
             InitializeComponent();
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
 
+            this.audioDeviceWatcher = audioDeviceWatcher;
             metadataService = new TagLibMetadataService();
             var scanner = new MusicLibraryScanner();
             var playlistStorage = new FilePlaylistStorage();
@@ -698,20 +703,20 @@ namespace wildflower
         #region Extra
         private void InitAudioWatcher()
         {
-            deviceEnumerator = new MMDeviceEnumerator();
-            deviceWatcher = new AudioDeviceWatcher();
-            deviceWatcher.DefaultDeviceChanged += () =>
+            audioDeviceWatcher.DefaultDeviceChanged += AudioDeviceWatcher_DefaultDeviceChanged;
+            audioDeviceWatcher.Start();
+        }
+
+        private void AudioDeviceWatcher_DefaultDeviceChanged(object? sender, EventArgs e)
+        {
+            RunOnUiThread(() =>
             {
-                RunOnUiThread(() =>
+                if (playerSession.IsPlaying)
                 {
-                    if (playerSession.IsPlaying)
-                    {
-                        playerSession.TogglePlayPause();
-                        UpdatePlayPauseIcon();
-                    }
-                });
-            };
-            deviceEnumerator.RegisterEndpointNotificationCallback(deviceWatcher);
+                    playerSession.TogglePlayPause();
+                    UpdatePlayPauseIcon();
+                }
+            });
         }
 
         private async void SystemEvents_PowerModeChanged(object sender, PowerModeChangedEventArgs e)
@@ -734,6 +739,7 @@ namespace wildflower
         {
             timer1.Stop();
             stateTimer.Stop();
+            audioDeviceWatcher.Stop();
             try
             {
                 playerSession.SavePlaybackStateAsync().GetAwaiter().GetResult();
@@ -748,8 +754,8 @@ namespace wildflower
         {
             FormClosing -= Form1_FormClosing;
             SystemEvents.PowerModeChanged -= SystemEvents_PowerModeChanged;
-            deviceEnumerator.UnregisterEndpointNotificationCallback(deviceWatcher);
-            deviceEnumerator.Dispose();
+            audioDeviceWatcher.DefaultDeviceChanged -= AudioDeviceWatcher_DefaultDeviceChanged;
+            audioDeviceWatcher.Dispose();
             playerSession.Dispose();
             OptionsBtnAnimationImage.Dispose();
         }
