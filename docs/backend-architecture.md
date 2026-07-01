@@ -18,6 +18,7 @@ Models are small data records and enums used by the services and UI:
 - `PlaylistInfo`: playlist id, numbered playlist directory path, selected music folder path, and derived paths for `musicFolderPath.txt`, `playlist.txt`, and `state.txt`.
 - `PlaybackState`: persisted playback state as `CurrentIndex` and `PositionBytes`.
 - `PlaybackProgress`: current position/length in milliseconds and BASS byte positions.
+- `PlayerSessionSnapshot`: UI-friendly read model for the current session, including playlist, tracks, current track, player status, loop mode, byte/second progress, volume, and capability flags.
 - `PlayerStatus`: stopped, playing, or paused.
 - `LoopMode`: currently `Off` or `Track`.
 
@@ -26,6 +27,14 @@ Models are small data records and enums used by the services and UI:
 `IPlayerSessionService` is the main application-facing backend interface. A frontend should usually call this service instead of calling lower-level services directly.
 
 `PlayerSessionService` owns the active playlist workflow, track order, current track index, loop state, temporary playback state, playback progress, playlist refresh, state saving/restoring, and auto-advance behavior. It coordinates the playback engine, playlist service, music scanner, and metadata service.
+
+`GetSnapshot()` returns a `PlayerSessionSnapshot` that future frontends can poll or bind to without knowing about BASS, playlist files, or WinForms controls. It is synchronous and intended to be safe for frequent UI reads. Command failures still come back through `SessionActionResult`; the snapshot represents current state, not the last command error.
+
+`SnapshotChanged` is raised after meaningful session state changes, such as playlist load/switch/delete, track refresh or shuffle, track changes, play/pause changes, loop or volume changes, seek changes, temporary playback entry/exit, and playback failures that affect session state.
+
+`ProgressChanged` is raised when a command changes playback progress or stream state. The backend still does not own a progress timer; WinForms and a future MAUI UI can keep their own timer and call `GetSnapshot()` or `GetProgress()` for continuous progress updates.
+
+These events are UI-neutral. They do not marshal to any UI thread, so each frontend must marshal event handling to its own UI dispatcher when needed.
 
 ### `IPlaybackEngine` / `BassPlaybackEngine`
 
@@ -72,10 +81,12 @@ This class is filesystem-specific and should remain behind the storage interface
 The UI is allowed to call:
 
 - `IPlayerSessionService` for normal app workflow.
+- `PlayerSessionSnapshot` from `IPlayerSessionService.GetSnapshot()` as the preferred UI read/bind model.
+- `IPlayerSessionService.SnapshotChanged` and `IPlayerSessionService.ProgressChanged` for backend-owned notifications.
 - `ISearchService` for search result lists.
 - `IMetadataService` when the UI needs display metadata.
 - `IPlaylistService` for playlist management screens when session-level methods are not enough.
-- Model types such as `PlaylistInfo`, `TrackInfo`, `PlaybackProgress`, and `PlaybackState`.
+- Model types such as `PlaylistInfo`, `TrackInfo`, `PlayerSessionSnapshot`, `PlaybackProgress`, and `PlaybackState`.
 
 The UI must not touch directly:
 
@@ -86,6 +97,8 @@ The UI must not touch directly:
 - Physical storage paths except for display/debug information.
 
 BASS, file storage, TagLib, and playlist files must stay hidden behind services because they are implementation details. This keeps the future MAUI UI focused on rendering and user interaction, while the backend continues to own playback, persistence, scanning, and metadata behavior.
+
+The backend does not call WinForms or MAUI dispatchers. Event subscribers must handle UI-thread marshaling in the frontend.
 
 ## 4. Saved Data Contract
 
@@ -137,8 +150,11 @@ A MAUI frontend should manually compose the current services or use a lightweigh
 5. Create `BassPlaybackEngine`.
 6. Create `SearchService`.
 7. Create `PlayerSessionService`.
-8. Call `InitializePlaybackEngine()`.
-9. Call `InitializeAsync(...)`.
+8. Subscribe to `SnapshotChanged` and `ProgressChanged` if the UI wants backend notifications.
+9. Call `InitializePlaybackEngine()`.
+10. Call `InitializeAsync(...)`.
+
+Event handlers should copy snapshot/progress values into MAUI bindable state on the MAUI UI thread. The backend does not marshal events to a dispatcher.
 
 ### Loading Last Playlist
 
@@ -158,9 +174,19 @@ await playerSession.AddPlaylistAsync(musicFolderPath);
 
 The backend should create or select the numbered playlist folder and save the playlist files according to the saved-data contract.
 
+After the command completes, the backend raises `SnapshotChanged` if the active playlist/session state changed.
+
 ### Listing Tracks
 
 Use `playerSession.Tracks` for exact file paths and `await playerSession.GetTrackDisplayNamesAsync()` for display names.
+
+For UI binding or repeated reads, prefer:
+
+```csharp
+PlayerSessionSnapshot snapshot = playerSession.GetSnapshot();
+var tracks = snapshot.Tracks;
+var currentTrack = snapshot.CurrentTrack;
+```
 
 The UI owns the visible list and selected visual row.
 
@@ -173,6 +199,8 @@ playerSession.PlayTrack(index);
 ```
 
 Then update UI state from `CurrentIndex`, `IsPlaying`, and `GetProgress()`.
+
+Future UIs should prefer updating from `PlayerSessionSnapshot` directly or by handling `SnapshotChanged`.
 
 ### Pause/Resume
 
@@ -200,6 +228,8 @@ playerSession.SeekToMilliseconds(milliseconds);
 ```
 
 The backend converts to BASS byte position.
+
+Seeking raises `SnapshotChanged` and `ProgressChanged` when the current stream position changes.
 
 ### Volume
 
@@ -270,6 +300,8 @@ playerSession.Dispose();
 
 Disposing the session disposes the playback engine, which frees BASS resources.
 
+Frontends should unsubscribe from session events during disposal if the session may outlive the UI object.
+
 ## 6. State Ownership
 
 Backend-owned state:
@@ -295,10 +327,14 @@ UI-owned state:
 
 The UI should reflect backend state. It should not become the source of truth for playlist position, playback stream, playlist files, or temporary playback restore behavior.
 
+For future UI work, `PlayerSessionSnapshot` is the recommended backend-owned read model. A UI can copy values from it into controls or bindable view models, but it should still issue commands through `IPlayerSessionService`.
+
+Backends own the event notifications. Frontends own the UI-thread marshaling and visual updates that happen in response to those events.
+
 ## 7. Remaining Migration Blockers
 
 - Timers are still UI-owned. WinForms currently owns progress polling, auto-advance polling, and 30-second state saving.
-- There is no backend event stream or snapshot model yet. The UI currently calls service methods and then manually refreshes controls.
+- Backend session events now exist, but WinForms still mostly calls service methods and manually refreshes controls instead of subscribing to them.
 - Startup still uses `InitializeAsync(Func<Task<string?>> requestMusicFolderAsync)`, which lets backend startup call back into UI folder selection.
 - The audio device watcher is not behind an interface yet.
 - BASS native DLL deployment must be handled carefully in any future MAUI package.
@@ -307,11 +343,10 @@ The UI should reflect backend state. It should not become the source of truth fo
 
 ## 8. Recommended Future Refactors
 
-1. Add `PlayerSessionSnapshot` for UI binding.
-2. Add backend state-change/progress events.
+1. Start using `PlayerSessionSnapshot` as the main UI read model in WinForms and future UI prototypes.
+2. Subscribe WinForms and future UI prototypes to `SnapshotChanged` and `ProgressChanged`.
 3. Replace startup folder-picker callback with a result-based startup flow.
 4. Add `IAudioDeviceWatcher`.
 5. Harden playlist path validation.
 6. Add unit tests with fake playback/storage.
 7. Keep documenting saved-data behavior.
-

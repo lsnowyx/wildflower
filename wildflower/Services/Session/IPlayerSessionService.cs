@@ -5,6 +5,9 @@ namespace wildflower.Services.Session
 {
     public interface IPlayerSessionService : IDisposable
     {
+        event EventHandler<PlayerSessionSnapshot>? SnapshotChanged;
+        event EventHandler<PlaybackProgress>? ProgressChanged;
+
         IReadOnlyList<string> Tracks { get; }
         PlaylistInfo? CurrentPlaylist { get; }
         int CurrentIndex { get; }
@@ -35,6 +38,7 @@ namespace wildflower.Services.Session
         void SetLooped(bool looped);
         void SetVolume(float volume);
         void SeekToMilliseconds(int milliseconds);
+        PlayerSessionSnapshot GetSnapshot();
         PlaybackProgress GetProgress();
         Task SavePlaybackStateAsync();
         Task<IReadOnlyList<string>> GetTrackDisplayNamesAsync();
