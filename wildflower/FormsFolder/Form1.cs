@@ -719,11 +719,10 @@ namespace wildflower
             });
         }
 
-        private async void SystemEvents_PowerModeChanged(object sender, PowerModeChangedEventArgs e)
+        private void SystemEvents_PowerModeChanged(object sender, PowerModeChangedEventArgs e)
         {
             if (e.Mode == PowerModes.Suspend)
             {
-                await playerSession.SavePlaybackStateAsync();
                 RunOnUiThread(() =>
                 {
                     if (playerSession.IsPlaying)
@@ -740,14 +739,6 @@ namespace wildflower
             timer1.Stop();
             stateTimer.Stop();
             audioDeviceWatcher.Stop();
-            try
-            {
-                playerSession.SavePlaybackStateAsync().GetAwaiter().GetResult();
-            }
-            catch
-            {
-                // Best-effort save on shutdown.
-            }
         }
 
         private void Form1_FormClosed(object? sender, FormClosedEventArgs e)

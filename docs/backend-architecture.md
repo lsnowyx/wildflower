@@ -312,12 +312,13 @@ The backend skips normal state saving while temporary playback is active.
 
 ### App Close/Disposal
 
-On app close or suspend, save state and dispose the session:
+On app close, stop UI timers/watchers and dispose the session:
 
 ```csharp
-await playerSession.SavePlaybackStateAsync();
 playerSession.Dispose();
 ```
+
+State is not force-saved on app close or Windows suspend. Normal playlist state saves happen through the frontend's 30-second timer and explicit update/playlist workflows.
 
 Disposing the session disposes the playback engine, which frees BASS resources.
 

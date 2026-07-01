@@ -553,7 +553,6 @@ namespace wildflower.Services.Session
 
             CurrentIndex = ClampTrackIndex(CurrentIndex);
             PlayTrackCore(CurrentIndex, SavedPositionBytes, updateCurrentIndex: true);
-            await SavePlaybackStateAsync();
 
             return refreshResult with { TrackListChanged = true, PlaybackChanged = true };
         }
