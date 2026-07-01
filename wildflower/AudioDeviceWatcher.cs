@@ -5,7 +5,7 @@ namespace wildflower
 {
     public class AudioDeviceWatcher : IMMNotificationClient
     {
-        public event Action DefaultDeviceChanged;
+        public event Action? DefaultDeviceChanged;
         public void OnDefaultDeviceChanged(DataFlow flow, Role role, string defaultDeviceId)
         {
             if (flow == DataFlow.Render && role == Role.Console)

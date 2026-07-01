@@ -88,78 +88,12 @@
             panel.Visible = false;
             IsAnimatingPanel = false;
         }
-        public static async Task TrackListAdd(string[] paths, ListBox track_list, bool clearList = true)
-        {
-            if (paths == null || paths.Length == 0)
-            {
-                track_list.Items.Clear();
-                return;
-            }
-            if (clearList) track_list.Items.Clear();
-            int iteration = 0;
-            var chunks = paths
-                .Select((item, index) => new { item, index })
-                .GroupBy(x => x.index / 25)
-                .Select(g => g.Select(x => x.item).ToArray())
-                .ToList();
-            var tasks = chunks.Select(chunk =>
-            {
-                int order = iteration++;
-                return Task.Run(() =>
-                {
-                    var metadata = GetMetadataFromArray(chunk);
-                    return (order, metadata);
-                });
-            }).ToList();
-            var results = await Task.WhenAll(tasks);
-            foreach (var (_, metadata) in results.OrderBy(r => r.order))
-            {
-                if (track_list.InvokeRequired)
-                {
-                    track_list.Invoke(() =>
-                    {
-                        foreach (var item in metadata)
-                            track_list.Items.Add(item.title + item.artist);
-                    });
-                }
-                else
-                {
-                    foreach (var item in metadata)
-                        track_list.Items.Add(item.title + item.artist);
-                }
-            }
-        }
-        private static List<(string title, string artist)> GetMetadataFromArray(string[] paths)
-        {
-            var results = new List<(string title, string artist)>();
-            foreach (var path in paths)
-                results.Add(GetMetadataFromFile(path));
-            return results;
-        }
-        public static (string title, string artist) GetMetadataFromFile(string filePath)
-        {
-            try
-            {
-                var file = TagLib.File.Create(filePath);
-                string title = file.Tag.Title ?? Path.GetFileNameWithoutExtension(filePath);
-                string artist = string.Empty;
-                if (file.Tag.FirstPerformer != null)
-                {
-                    artist += $" - {file.Tag.FirstPerformer}";
-                }
-                return (title, artist);
-            }
-            catch (Exception)
-            {
-                return (Path.GetFileNameWithoutExtension(filePath), string.Empty);
-            }
-        }
         public static bool IsItemClipped(ListBox track_list)
         {
             if (track_list.SelectedItem == null)
                 return false;
 
-            string itemText = track_list.SelectedItem.ToString();
+            string itemText = track_list.SelectedItem?.ToString() ?? string.Empty;
             using (Graphics g = track_list.CreateGraphics())
             {
                 Size textSize = TextRenderer.MeasureText(g, itemText, track_list.Font);

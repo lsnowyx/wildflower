@@ -2,7 +2,7 @@ namespace wildflower
 {
     internal static class Program
     {
-        private static Mutex mutex;
+        private static Mutex? mutex;
         /// <summary>
         ///  The main entry point for the application.
         /// </summary>

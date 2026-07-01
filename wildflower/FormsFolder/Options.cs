@@ -2,12 +2,12 @@
 {
     public partial class Options : Form
     {
-        public event EventHandler OpenPressed;
-        public event EventHandler UpdatePressed;
-        public event EventHandler SearchPressed;
-        public event EventHandler PlaylistPressed;
-        public event EventHandler OpenSaveFolderPressed;
-        public event EventHandler CloseRequest;
+        public event EventHandler? OpenPressed;
+        public event EventHandler? UpdatePressed;
+        public event EventHandler? SearchPressed;
+        public event EventHandler? PlaylistPressed;
+        public event EventHandler? OpenSaveFolderPressed;
+        public event EventHandler? CloseRequest;
         public Options()
         {
             InitializeComponent();
