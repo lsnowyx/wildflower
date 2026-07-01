@@ -4,7 +4,7 @@
 
 `wildflower` currently uses WinForms as its frontend. The WinForms forms are responsible for the visual controls, icons, panels, timers, folder picker, and user interaction.
 
-The reusable music-player behavior now lives in backend models and services under `wildflower/Models` and `wildflower/Services`. These services are intended to be reusable by a future MAUI frontend while preserving the current app behavior.
+The reusable music-player behavior now lives mostly in backend models and services under `wildflower/Models` and `wildflower/Services`. The current NAudio-backed `AudioDeviceWatcher` implementation still lives at the project root, but it is hidden behind `wildflower/Services/Audio/IAudioDeviceWatcher`. These services and interfaces are intended to be reusable by a future MAUI frontend while preserving the current app behavior.
 
 MAUI migration has not started yet. This document describes the current backend/frontend boundary so a later MAUI UI can replace the WinForms UI without redesigning playlist storage, playback state, or playback workflow.
 
