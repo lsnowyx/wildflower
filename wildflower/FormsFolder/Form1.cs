@@ -93,18 +93,19 @@ namespace wildflower
             hoverTimeLabel.BringToFront();
             Controls.Add(hoverTimeLabel);
 
-            OptionsBtnAnimationImage = LoadIconImage("iconMoreOptions.png", btn_options.Width, btn_options.Height);
+            OptionsBtnAnimationImage = Helper.LoadIconImage("iconMoreOptions.png", btn_options.Width, btn_options.Height);
             Icon = new Icon(Path.Combine(Helper.IconsPath, "wildflowerico.ico"));
-            SetPictureBoxImage(btn_play_pause, LoadIconImage("iconPlayButton.png", btn_play_pause.Width, btn_play_pause.Height));
-            SetPictureBoxImage(btn_prevTrack, LoadIconImage("iconPreviousTrack.png", btn_prevTrack.Width, btn_prevTrack.Height));
-            SetPictureBoxImage(btn_nextTrack, LoadIconImage("iconNextTrack.png", btn_nextTrack.Width, btn_nextTrack.Height));
-            SetPictureBoxImage(btn_loopTrack, LoadIconImage("iconLoopTrack.png", btn_loopTrack.Width, btn_loopTrack.Height));
-            SetPictureBoxImage(btn_shuffleTrack, LoadIconImage("iconShuffleTrack.png", btn_shuffleTrack.Width, btn_shuffleTrack.Height));
+            SetPictureBoxImage(btn_play_pause, Helper.LoadIconImage("iconPlayButton.png", btn_play_pause.Width, btn_play_pause.Height));
+            SetPictureBoxImage(btn_prevTrack, Helper.LoadIconImage("iconPreviousTrack.png", btn_prevTrack.Width, btn_prevTrack.Height));
+            SetPictureBoxImage(btn_nextTrack, Helper.LoadIconImage("iconNextTrack.png", btn_nextTrack.Width, btn_nextTrack.Height));
+            SetPictureBoxImage(btn_loopTrack, Helper.LoadIconImage("iconLoopTrack.png", btn_loopTrack.Width, btn_loopTrack.Height));
+            SetPictureBoxImage(btn_shuffleTrack, Helper.LoadIconImage("iconShuffleTrack.png", btn_shuffleTrack.Width, btn_shuffleTrack.Height));
             btn_options.Image = OptionsBtnAnimationImage;
-            SetPictureBoxImage(btn_goBack, LoadIconImage("iconGoBack.png", btn_goBack.Width, btn_goBack.Height));
-            SetPictureBoxImage(btn_fullSongName, LoadIconImage("iconFullSongName.png", btn_fullSongName.Width, btn_fullSongName.Height));
+            SetPictureBoxImage(btn_goBack, Helper.LoadIconImage("iconGoBack.png", btn_goBack.Width, btn_goBack.Height));
+            SetPictureBoxImage(btn_fullSongName, Helper.LoadIconImage("iconFullSongName.png", btn_fullSongName.Width, btn_fullSongName.Height));
 
             SystemEvents.PowerModeChanged += SystemEvents_PowerModeChanged;
+            FormClosing += Form1_FormClosing;
             FormClosed += Form1_FormClosed;
             InitAudioWatcher();
 
@@ -680,17 +681,23 @@ namespace wildflower
             }
         }
 
-        private async void Form1_FormClosed(object? sender, FormClosedEventArgs e)
+        private void Form1_FormClosing(object? sender, FormClosingEventArgs e)
         {
+            timer1.Stop();
+            stateTimer.Stop();
             try
             {
-                await playerSession.SavePlaybackStateAsync();
+                playerSession.SavePlaybackStateAsync().GetAwaiter().GetResult();
             }
             catch
             {
                 // Best-effort save on shutdown.
             }
+        }
 
+        private void Form1_FormClosed(object? sender, FormClosedEventArgs e)
+        {
+            FormClosing -= Form1_FormClosing;
             SystemEvents.PowerModeChanged -= SystemEvents_PowerModeChanged;
             deviceEnumerator.UnregisterEndpointNotificationCallback(deviceWatcher);
             deviceEnumerator.Dispose();
@@ -700,7 +707,7 @@ namespace wildflower
 
         private void RunOnUiThread(Action action)
         {
-            if (IsDisposed) return;
+            if (IsDisposed || !IsHandleCreated) return;
             if (InvokeRequired)
             {
                 BeginInvoke(action);
@@ -708,12 +715,6 @@ namespace wildflower
             }
 
             action();
-        }
-
-        private Image LoadIconImage(string fileName, int width, int height)
-        {
-            using Image source = Image.FromFile(Path.Combine(Helper.IconsPath, fileName));
-            return Helper.ResizeImage(source, width, height);
         }
 
         private void SetPictureBoxImage(PictureBox pictureBox, Image image)
@@ -728,14 +729,14 @@ namespace wildflower
         {
             SetPictureBoxImage(
                 btn_play_pause,
-                LoadIconImage(playerSession.IsPlaying ? "iconPauseButton.png" : "iconPlayButton.png", btn_play_pause.Width, btn_play_pause.Height));
+                Helper.LoadIconImage(playerSession.IsPlaying ? "iconPauseButton.png" : "iconPlayButton.png", btn_play_pause.Width, btn_play_pause.Height));
         }
 
         private void UpdateLoopIcon()
         {
             SetPictureBoxImage(
                 btn_loopTrack,
-                LoadIconImage(playerSession.IsLooped ? "iconUnLoopTrack.png" : "iconLoopTrack.png", btn_loopTrack.Width, btn_loopTrack.Height));
+                Helper.LoadIconImage(playerSession.IsLooped ? "iconUnLoopTrack.png" : "iconLoopTrack.png", btn_loopTrack.Width, btn_loopTrack.Height));
         }
         #endregion
     }

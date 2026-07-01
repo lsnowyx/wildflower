@@ -71,7 +71,7 @@ namespace wildflower.Services.Playlist
 
         public Task DeletePlaylistAsync(string playlistId)
         {
-            return storage.DeletePlaylistAsync(playlistId);
+            return DeletePlaylistCoreAsync(playlistId);
         }
 
         public async Task<PlaylistInfo?> FindAvailablePlaylistAsync()
@@ -120,6 +120,15 @@ namespace wildflower.Services.Playlist
         public Task SaveLastUsedPlaylistAsync(PlaylistInfo playlist)
         {
             return storage.WriteLastUsedPlaylistIdAsync(playlist.Id);
+        }
+
+        private async Task DeletePlaylistCoreAsync(string playlistId)
+        {
+            await storage.DeletePlaylistAsync(playlistId);
+
+            string? lastUsedId = await storage.ReadLastUsedPlaylistIdAsync();
+            if (string.Equals(lastUsedId, playlistId, StringComparison.OrdinalIgnoreCase))
+                await storage.WriteLastUsedPlaylistIdAsync(string.Empty);
         }
     }
 }

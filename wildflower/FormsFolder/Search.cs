@@ -21,9 +21,9 @@ namespace wildflower
             Func<bool> isSearchSuppressed)
         {
             InitializeComponent();
-            btn_searchTrack.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconFindTrack.png"), btn_searchTrack.Width, btn_searchTrack.Height);
-            btn_Play.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconPlayButton.png"), btn_Play.Width, btn_Play.Height);
-            btn_Random.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconShuffleTrack.png"), btn_Random.Width, btn_Random.Height);
+            btn_searchTrack.Image = Helper.LoadIconImage("iconFindTrack.png", btn_searchTrack.Width, btn_searchTrack.Height);
+            btn_Play.Image = Helper.LoadIconImage("iconPlayButton.png", btn_Play.Width, btn_Play.Height);
+            btn_Random.Image = Helper.LoadIconImage("iconShuffleTrack.png", btn_Random.Width, btn_Random.Height);
             this.paths = paths.ToArray();
             this.searchService = searchService;
             this.metadataService = metadataService;

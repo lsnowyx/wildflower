@@ -17,8 +17,8 @@ namespace wildflower
             InitializeComponent();
             this.playlists = playlists.ToList();
             this.currentPlayListNr = currentPlayListNr;
-            btn_PlayPlaylist.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconPlayButton.png"), btn_PlayPlaylist.Width, btn_PlayPlaylist.Height);
-            btn_delPlaylist.Image = Helper.ResizeImage(Image.FromFile(Helper.IconsPath + "iconDeletePlaylist.png"), btn_delPlaylist.Width, btn_delPlaylist.Height);
+            btn_PlayPlaylist.Image = Helper.LoadIconImage("iconPlayButton.png", btn_PlayPlaylist.Width, btn_PlayPlaylist.Height);
+            btn_delPlaylist.Image = Helper.LoadIconImage("iconDeletePlaylist.png", btn_delPlaylist.Width, btn_delPlaylist.Height);
         }
 
         public void SetPlaylists(IEnumerable<PlaylistInfo> playlists, string currentPlayListNr)

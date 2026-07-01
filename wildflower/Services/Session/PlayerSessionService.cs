@@ -262,17 +262,19 @@ namespace wildflower.Services.Session
 
             int index = tracks.FindIndex(path => string.Equals(path, filePath, StringComparison.OrdinalIgnoreCase));
             if (index < 0)
-                index = tracks.FindIndex(path => path.Contains(filePath, StringComparison.OrdinalIgnoreCase));
-
-            if (index < 0)
                 return new SessionActionResult(false, Message: "Song is no longer available.");
 
-            if (!IsTemporaryPlayback)
-                SavedPositionBytes = playbackEngine.GetPositionBytes();
+            bool wasTemporaryPlayback = IsTemporaryPlayback;
+            int previousTemporaryTrackIndex = temporaryTrackIndex;
 
             temporaryTrackIndex = index;
             IsTemporaryPlayback = true;
-            PlayTemporaryIndex();
+            if (!PlayTemporaryIndex())
+            {
+                temporaryTrackIndex = previousTemporaryTrackIndex;
+                IsTemporaryPlayback = wasTemporaryPlayback;
+                return new SessionActionResult(false, Message: "Could not play selected song.");
+            }
 
             string displayName = await GetTrackDisplayNameAsync(tracks[index]);
             return new SessionActionResult(
@@ -281,18 +283,19 @@ namespace wildflower.Services.Session
                 TemporaryTrackDisplayName: displayName);
         }
 
-        public Task<SessionActionResult> ReturnFromTemporaryPlaybackAsync()
+        public async Task<SessionActionResult> ReturnFromTemporaryPlaybackAsync()
         {
             if (!IsTemporaryPlayback)
-                return Task.FromResult(SessionActionResult.NoChange);
+                return SessionActionResult.NoChange;
 
             IsTemporaryPlayback = false;
             temporaryTrackIndex = -1;
+            await RestorePersistedPlaybackStateAsync();
             PlayCurrentTrack(SavedPositionBytes);
 
-            return Task.FromResult(new SessionActionResult(
+            return new SessionActionResult(
                 PlaybackChanged: true,
-                TemporaryPlaybackChanged: true));
+                TemporaryPlaybackChanged: true);
         }
 
         public bool PlayTrack(int index, long startPositionBytes = 0)
@@ -340,8 +343,7 @@ namespace wildflower.Services.Session
             if (tracks.Count == 0 || CurrentIndex >= tracks.Count - 1)
                 return false;
 
-            CurrentIndex++;
-            return PlayTrack(CurrentIndex);
+            return PlayTrack(CurrentIndex + 1);
         }
 
         public bool PreviousTrack()
@@ -349,8 +351,7 @@ namespace wildflower.Services.Session
             if (tracks.Count == 0 || CurrentIndex <= 0)
                 return false;
 
-            CurrentIndex--;
-            return PlayTrack(CurrentIndex);
+            return PlayTrack(CurrentIndex - 1);
         }
 
         public void SetLooped(bool looped)
@@ -393,7 +394,8 @@ namespace wildflower.Services.Session
             SavedPositionBytes = playbackEngine.GetPositionBytes();
             await playlistService.SavePlaybackStateAsync(
                 CurrentPlaylist,
-                new PlaybackState(CurrentIndex, SavedPositionBytes));
+                new PlaybackState(CurrentIndex, SavedPositionBytes))
+                .ConfigureAwait(false);
         }
 
         public async Task<IReadOnlyList<string>> GetTrackDisplayNamesAsync()
@@ -467,9 +469,6 @@ namespace wildflower.Services.Session
             if (index < 0 || index >= tracks.Count)
                 return false;
 
-            if (updateCurrentIndex)
-                CurrentIndex = index;
-
             bool loaded = playbackEngine.Load(tracks[index], startPositionBytes);
             if (!loaded)
             {
@@ -479,13 +478,28 @@ namespace wildflower.Services.Session
 
             bool played = playbackEngine.Play(false);
             IsPlaying = played;
+            if (played && updateCurrentIndex)
+                CurrentIndex = index;
             return played;
         }
 
-        private void PlayTemporaryIndex()
+        private bool PlayTemporaryIndex()
         {
             if (temporaryTrackIndex >= 0 && temporaryTrackIndex < tracks.Count)
-                PlayTrackCore(temporaryTrackIndex, 0, updateCurrentIndex: false);
+                return PlayTrackCore(temporaryTrackIndex, 0, updateCurrentIndex: false);
+
+            return false;
+        }
+
+        private async Task RestorePersistedPlaybackStateAsync()
+        {
+            PlaybackState? persistedState = CurrentPlaylist == null
+                ? null
+                : await playlistService.LoadPlaybackStateAsync(CurrentPlaylist);
+
+            CurrentIndex = persistedState?.CurrentIndex ?? 0;
+            SavedPositionBytes = Math.Max(0, persistedState?.PositionBytes ?? 0);
+            CurrentIndex = ClampTrackIndex(CurrentIndex);
         }
 
         private async Task<bool> CleanMissingTracksAsync()

@@ -6,6 +6,12 @@
         public static bool IsAnimatingButton { get; private set; } = false;
         public static bool IsAnimatingPanel { get; private set; } = false;
         public static string IconsPath { get; set; } = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "icons\\");
+        public static Image LoadIconImage(string fileName, int width, int height)
+        {
+            using Image source = Image.FromFile(Path.Combine(IconsPath, fileName));
+            return ResizeImage(source, width, height);
+        }
+
         public static Image ResizeImage(Image img, int width, int height)
         {
             Bitmap bmp = new Bitmap(width, height);
@@ -28,7 +34,10 @@
             {
                 float angle = startAngle + (deltaAngle * i / steps);
                 Image rotated = RotateImage(baseImage, angle);
+                Image? previous = picBox.Image;
                 picBox.Image = rotated;
+                if (previous != null && !ReferenceEquals(previous, baseImage))
+                    previous.Dispose();
 
                 await Task.Delay(delayMs);
             }
