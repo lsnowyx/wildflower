@@ -10,6 +10,7 @@ namespace wildflower.Services.Session
         private readonly IPlaybackEngine playbackEngine;
         private readonly IPlaylistService playlistService;
         private readonly IMusicLibraryScanner musicLibraryScanner;
+        private readonly IMusicLibrarySourceAccess sourceAccess;
         private readonly IMetadataService metadataService;
         private readonly Random random = new();
         private readonly List<string> tracks = new();
@@ -21,18 +22,21 @@ namespace wildflower.Services.Session
             IPlaybackEngine playbackEngine,
             IPlaylistService playlistService,
             IMusicLibraryScanner musicLibraryScanner,
+            IMusicLibrarySourceAccess sourceAccess,
             IMetadataService metadataService)
         {
             this.playbackEngine = playbackEngine;
             this.playlistService = playlistService;
             this.musicLibraryScanner = musicLibraryScanner;
+            this.sourceAccess = sourceAccess;
             this.metadataService = metadataService;
+            playbackEngine.StateChanged += PlaybackEngine_StateChanged;
         }
 
         public IReadOnlyList<string> Tracks => tracks;
         public PlaylistInfo? CurrentPlaylist { get; private set; }
         public int CurrentIndex { get; private set; }
-        public long SavedPositionBytes { get; private set; }
+        public long SavedPosition { get; private set; }
         public bool IsPlaying { get; private set; }
         public bool IsTemporaryPlayback { get; private set; }
         public bool HasTracks => tracks.Count > 0;
@@ -160,7 +164,7 @@ namespace wildflower.Services.Session
                 return new SessionActionResult(false, Message: "No playlist selected.");
 
             if (string.IsNullOrWhiteSpace(CurrentPlaylist.MusicFolderPath) ||
-                !Directory.Exists(CurrentPlaylist.MusicFolderPath))
+                !sourceAccess.IsLibraryAvailable(CurrentPlaylist.MusicFolderPath))
             {
                 await playlistService.RemoveInvalidPlaylistsAsync();
                 ClearPlaylist();
@@ -179,7 +183,7 @@ namespace wildflower.Services.Session
             if (tracks.Count == 0)
             {
                 CurrentIndex = 0;
-                SavedPositionBytes = 0;
+                SavedPosition = 0;
                 playbackEngine.Stop();
                 playbackEngine.Free();
                 IsPlaying = false;
@@ -203,7 +207,7 @@ namespace wildflower.Services.Session
             if (!refreshResult.Succeeded || refreshResult.MissingMusicFolder || !HasTracks)
                 return refreshResult;
 
-            PlayCurrentTrack(SavedPositionBytes);
+            PlayCurrentTrack(SavedPosition);
             return refreshResult with { PlaybackChanged = true };
         }
 
@@ -223,7 +227,7 @@ namespace wildflower.Services.Session
             }
 
             CurrentIndex = 0;
-            SavedPositionBytes = 0;
+            SavedPosition = 0;
             RefreshTrackSnapshot();
             await SavePlaylistAsync();
             bool played = PlayTrack(0);
@@ -312,7 +316,7 @@ namespace wildflower.Services.Session
             IsTemporaryPlayback = false;
             temporaryTrackIndex = -1;
             await RestorePersistedPlaybackStateAsync();
-            bool restoredPlayback = PlayCurrentTrack(SavedPositionBytes);
+            bool restoredPlayback = PlayCurrentTrack(SavedPosition);
 
             var result = new SessionActionResult(
                 PlaybackChanged: true,
@@ -320,24 +324,24 @@ namespace wildflower.Services.Session
             return restoredPlayback ? result : NotifyFromResult(result);
         }
 
-        public bool PlayTrack(int index, long startPositionBytes = 0)
+        public bool PlayTrack(int index, long startPosition = 0)
         {
             bool wasPlaying = IsPlaying;
-            bool played = PlayTrackCore(index, startPositionBytes, updateCurrentIndex: !IsTemporaryPlayback);
+            bool played = PlayTrackCore(index, startPosition, updateCurrentIndex: !IsTemporaryPlayback);
             if (played || wasPlaying != IsPlaying)
                 NotifySessionChanged();
 
             return played;
         }
 
-        public bool PlayCurrentTrack(long startPositionBytes = 0)
+        public bool PlayCurrentTrack(long startPosition = 0)
         {
             if (tracks.Count == 0)
                 return false;
 
             CurrentIndex = ClampTrackIndex(CurrentIndex);
             bool wasPlaying = IsPlaying;
-            bool played = PlayTrackCore(CurrentIndex, startPositionBytes, updateCurrentIndex: true);
+            bool played = PlayTrackCore(CurrentIndex, startPosition, updateCurrentIndex: true);
             if (played || wasPlaying != IsPlaying)
                 NotifySessionChanged();
 
@@ -349,6 +353,7 @@ namespace wildflower.Services.Session
             if (tracks.Count == 0)
                 return false;
 
+            IsPlaying = playbackEngine.Status == PlayerStatus.Playing;
             if (IsPlaying)
             {
                 playbackEngine.Pause();
@@ -361,7 +366,7 @@ namespace wildflower.Services.Session
             {
                 CurrentIndex = ClampTrackIndex(CurrentIndex);
                 bool wasPlaying = IsPlaying;
-                if (!PlayTrackCore(CurrentIndex, SavedPositionBytes, updateCurrentIndex: true))
+                if (!PlayTrackCore(CurrentIndex, SavedPosition, updateCurrentIndex: true))
                 {
                     if (wasPlaying != IsPlaying)
                         NotifySessionChanged();
@@ -419,7 +424,7 @@ namespace wildflower.Services.Session
         public void SeekToMilliseconds(int milliseconds)
         {
             bool positionChanged = playbackEngine.SetPositionSeconds(milliseconds / 1000.0);
-            SavedPositionBytes = playbackEngine.GetPositionBytes();
+            SavedPosition = playbackEngine.GetPersistedPosition();
             if (positionChanged || playbackEngine.HasStream)
                 NotifySessionChanged();
         }
@@ -428,7 +433,7 @@ namespace wildflower.Services.Session
         {
             PlayerStatus status = playbackEngine.Status;
             bool hasStream = playbackEngine.HasStream;
-            long positionBytes = hasStream ? playbackEngine.GetPositionBytes() : SavedPositionBytes;
+            long positionBytes = hasStream ? playbackEngine.GetPositionBytes() : 0;
             long lengthBytes = hasStream ? playbackEngine.GetLengthBytes() : 0;
             double positionSeconds = hasStream ? playbackEngine.GetPositionSeconds() : 0;
             double lengthSeconds = hasStream ? playbackEngine.GetLengthSeconds() : 0;
@@ -459,7 +464,7 @@ namespace wildflower.Services.Session
                 tracks.Count > 0 && status == PlayerStatus.Playing,
                 !IsTemporaryPlayback && snapshotCurrentIndex >= 0 && snapshotCurrentIndex < tracks.Count - 1,
                 !IsTemporaryPlayback && snapshotCurrentIndex > 0,
-                hasStream && lengthBytes > 0);
+                hasStream && lengthSeconds > 0);
         }
 
         public PlaybackProgress GetProgress()
@@ -483,10 +488,10 @@ namespace wildflower.Services.Session
                 return;
 
             CurrentIndex = ClampTrackIndex(CurrentIndex);
-            SavedPositionBytes = playbackEngine.GetPositionBytes();
+            SavedPosition = playbackEngine.GetPersistedPosition();
             await playlistService.SavePlaybackStateAsync(
                 CurrentPlaylist,
-                new PlaybackState(CurrentIndex, SavedPositionBytes))
+                new PlaybackState(CurrentIndex, SavedPosition))
                 .ConfigureAwait(false);
         }
 
@@ -503,6 +508,7 @@ namespace wildflower.Services.Session
 
         public void Dispose()
         {
+            playbackEngine.StateChanged -= PlaybackEngine_StateChanged;
             playbackEngine.Dispose();
         }
 
@@ -512,7 +518,7 @@ namespace wildflower.Services.Session
                 return new SessionActionResult(false, Message: "No playlist selected.");
 
             if (string.IsNullOrWhiteSpace(CurrentPlaylist.MusicFolderPath) ||
-                !Directory.Exists(CurrentPlaylist.MusicFolderPath))
+                !sourceAccess.IsLibraryAvailable(CurrentPlaylist.MusicFolderPath))
             {
                 await playlistService.RemoveInvalidPlaylistsAsync();
                 ClearPlaylist();
@@ -530,7 +536,7 @@ namespace wildflower.Services.Session
                 tracks.Clear();
                 tracks.AddRange(await musicLibraryScanner.ScanAsync(CurrentPlaylist.MusicFolderPath));
                 RefreshTrackSnapshot();
-                SavedPositionBytes = 0;
+                SavedPosition = 0;
                 CurrentIndex = 0;
 
                 if (tracks.Count == 0)
@@ -545,24 +551,24 @@ namespace wildflower.Services.Session
 
             PlaybackState? savedState = await playlistService.LoadPlaybackStateAsync(CurrentPlaylist);
             CurrentIndex = savedState?.CurrentIndex ?? 0;
-            SavedPositionBytes = Math.Max(0, savedState?.PositionBytes ?? 0);
+            SavedPosition = Math.Max(0, savedState?.Position ?? 0);
 
             SessionActionResult refreshResult = await RefreshPlaylistAsync();
             if (!refreshResult.Succeeded || refreshResult.MissingMusicFolder || tracks.Count == 0)
                 return refreshResult;
 
             CurrentIndex = ClampTrackIndex(CurrentIndex);
-            PlayTrackCore(CurrentIndex, SavedPositionBytes, updateCurrentIndex: true);
+            PlayTrackCore(CurrentIndex, SavedPosition, updateCurrentIndex: true);
 
             return refreshResult with { TrackListChanged = true, PlaybackChanged = true };
         }
 
-        private bool PlayTrackCore(int index, long startPositionBytes, bool updateCurrentIndex)
+        private bool PlayTrackCore(int index, long startPosition, bool updateCurrentIndex)
         {
             if (index < 0 || index >= tracks.Count)
                 return false;
 
-            bool loaded = playbackEngine.Load(tracks[index], startPositionBytes);
+            bool loaded = playbackEngine.Load(tracks[index], startPosition);
             if (!loaded)
             {
                 IsPlaying = false;
@@ -591,7 +597,7 @@ namespace wildflower.Services.Session
                 : await playlistService.LoadPlaybackStateAsync(CurrentPlaylist);
 
             CurrentIndex = persistedState?.CurrentIndex ?? 0;
-            SavedPositionBytes = Math.Max(0, persistedState?.PositionBytes ?? 0);
+            SavedPosition = Math.Max(0, persistedState?.Position ?? 0);
             CurrentIndex = ClampTrackIndex(CurrentIndex);
         }
 
@@ -605,7 +611,7 @@ namespace wildflower.Services.Session
                 for (int i = 0; i < tracks.Count; i++)
                 {
                     string file = tracks[i];
-                    if (File.Exists(file))
+                    if (sourceAccess.IsTrackAvailable(file))
                     {
                         validTracks.Add(file);
                     }
@@ -660,7 +666,7 @@ namespace wildflower.Services.Session
             RefreshTrackSnapshot();
             CurrentPlaylist = null;
             CurrentIndex = 0;
-            SavedPositionBytes = 0;
+            SavedPosition = 0;
             IsPlaying = false;
             IsTemporaryPlayback = false;
             temporaryTrackIndex = -1;
@@ -734,6 +740,13 @@ namespace wildflower.Services.Session
                    result.PlaybackChanged ||
                    result.TemporaryPlaybackChanged ||
                    result.ClearedPlaylist;
+        }
+
+        private void PlaybackEngine_StateChanged(object? sender, EventArgs e)
+        {
+            IsPlaying = playbackEngine.Status == PlayerStatus.Playing;
+            SavedPosition = playbackEngine.GetPersistedPosition();
+            NotifySessionChanged();
         }
 
         private void NotifySessionChanged(bool includeProgress = true)

@@ -1,0 +1,487 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="wildflowerFrontend.Views.MainPlayerPage"
+    x:Name="Root"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
+    xmlns:viewModels="clr-namespace:wildflowerFrontend.ViewModels"
+    Style="{StaticResource PlayerPageStyle}">
+
+    <Grid BackgroundColor="{StaticResource PlayerBackground}">
+        <!-- Low-cost geometric ambience: no artwork and no continuous animation. -->
+        <Grid InputTransparent="True" Opacity="0.16">
+            <BoxView
+                Margin="-180,120,200,0"
+                BackgroundColor="{StaticResource PlayerDivider}"
+                HeightRequest="1"
+                Rotation="-14"
+                VerticalOptions="Start" />
+            <BoxView
+                Margin="120,420,-180,0"
+                BackgroundColor="{StaticResource PlayerAccent}"
+                HeightRequest="1"
+                Opacity="0.35"
+                Rotation="-14"
+                VerticalOptions="Start" />
+            <shapes:Path
+                Margin="0,0,40,0"
+                Aspect="Fill"
+                Data="M 0,0 L 500,0 L 330,260 L 0,330 Z"
+                Fill="{StaticResource PlayerRaisedSurfaceBrush}"
+                HorizontalOptions="End"
+                Opacity="0.45"
+                VerticalOptions="Start"
+                WidthRequest="500"
+                HeightRequest="330" />
+        </Grid>
+
+        <Grid ColumnDefinitions="13*,7*">
+            <!-- LEFT / PLAYLIST CONTENT -->
+            <Border
+                Grid.Column="0"
+                BackgroundColor="{StaticResource PlayerBackground}"
+                Padding="30,24,24,22"
+                StrokeThickness="0">
+                <Grid RowDefinitions="Auto,Auto,*" RowSpacing="14">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                        <VerticalStackLayout Spacing="1">
+                            <Label
+                                Style="{StaticResource SectionLabel}"
+                                Text="WILDFLOWER / AUDIO SYSTEM"
+                                TextColor="{StaticResource PlayerAccent}" />
+                            <Label
+                                FontFamily="OpenSansSemibold"
+                                FontSize="28"
+                                LineBreakMode="TailTruncation"
+                                MaxLines="1"
+                                Style="{StaticResource PrimaryLabel}"
+                                Text="{Binding PlaylistName}" />
+                            <HorizontalStackLayout Spacing="14">
+                                <Label Style="{StaticResource SecondaryLabel}" Text="{Binding TrackCountText}" />
+                                <Label Style="{StaticResource SecondaryLabel}" Text="//" />
+                                <Label Style="{StaticResource SectionLabel}" Text="{Binding ContentModeLabel}" />
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+
+                        <HorizontalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
+                            <Border Style="{StaticResource AngularActionBorder}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding OpenSearchCommand}" />
+                                </Border.GestureRecognizers>
+                                <HorizontalStackLayout Spacing="7">
+                                    <shapes:Path
+                                        Aspect="Uniform"
+                                        Data="M 10,1 A 9,9 0 1 0 10,19 A 9,9 0 1 0 10,1 M 16.5,16.5 L 23,23"
+                                        HeightRequest="15"
+                                        Stroke="{StaticResource PlayerAccent}"
+                                        StrokeThickness="2"
+                                        WidthRequest="15" />
+                                    <Label Style="{StaticResource AngularActionLabel}" Text="SEARCH" />
+                                </HorizontalStackLayout>
+                            </Border>
+
+                            <Border Style="{StaticResource AngularActionBorder}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding OpenPlaylistsCommand}" />
+                                </Border.GestureRecognizers>
+                                <Label Style="{StaticResource AngularActionLabel}" Text="PLAYLISTS" />
+                            </Border>
+
+                            <Border Style="{StaticResource AngularActionBorder}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding AddFolderCommand}" />
+                                </Border.GestureRecognizers>
+                                <Label
+                                    Style="{StaticResource AngularActionLabel}"
+                                    Text="+ FOLDER"
+                                    TextColor="{StaticResource PlayerAccent}" />
+                            </Border>
+                        </HorizontalStackLayout>
+                    </Grid>
+
+                    <!-- Search mode uses the same content region. -->
+                    <Grid
+                        Grid.Row="1"
+                        ColumnDefinitions="Auto,*,Auto"
+                        ColumnSpacing="10"
+                        IsVisible="{Binding IsSearchMode}">
+                        <Border Padding="12,8" Style="{StaticResource AngularActionBorder}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding CloseSearchCommand}" />
+                            </Border.GestureRecognizers>
+                            <Label Style="{StaticResource AngularActionLabel}" Text="← RETURN" />
+                        </Border>
+                        <Border
+                            Grid.Column="1"
+                            BackgroundColor="{StaticResource PlayerRaisedSurface}"
+                            Padding="12,2"
+                            Stroke="{StaticResource PlayerAccent}"
+                            StrokeThickness="1">
+                            <Entry
+                                x:Name="SearchEntry"
+                                BackgroundColor="Transparent"
+                                ClearButtonVisibility="WhileEditing"
+                                Placeholder="TITLE / ARTIST / FILENAME"
+                                PlaceholderColor="{StaticResource PlayerSecondaryText}"
+                                ReturnCommand="{Binding ExecuteSearchCommand}"
+                                ReturnType="Search"
+                                Text="{Binding SearchQuery}"
+                                TextColor="{StaticResource PlayerPrimaryText}" />
+                        </Border>
+                        <Border Grid.Column="2" Style="{StaticResource AngularActionBorder}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ExecuteSearchCommand}" />
+                            </Border.GestureRecognizers>
+                            <Label
+                                Style="{StaticResource AngularActionLabel}"
+                                Text="EXECUTE"
+                                TextColor="{StaticResource PlayerAccent}" />
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.Row="2">
+                        <!-- Virtualized track list. The backend snapshot determines IsCurrent. -->
+                        <CollectionView
+                            x:Name="TrackCollection"
+                            IsVisible="{Binding IsTrackMode}"
+                            ItemsSource="{Binding VisibleTracks}"
+                            SelectionMode="None"
+                            VerticalScrollBarVisibility="Always">
+                            <CollectionView.EmptyView>
+                                <Grid Padding="40">
+                                    <VerticalStackLayout HorizontalOptions="Center" Spacing="8" VerticalOptions="Center">
+                                        <Label
+                                            HorizontalTextAlignment="Center"
+                                            Style="{StaticResource SectionLabel}"
+                                            Text="NO TRACKS IN THIS VIEW"
+                                            TextColor="{StaticResource PlayerSecondaryText}" />
+                                        <Label
+                                            HorizontalTextAlignment="Center"
+                                            Style="{StaticResource SecondaryLabel}"
+                                            Text="ADD A FOLDER OR TRY ANOTHER SEARCH" />
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </CollectionView.EmptyView>
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="viewModels:TrackRowViewModel">
+                                    <Border Style="{StaticResource TrackRowBorder}">
+                                        <Border.Triggers>
+                                            <DataTrigger Binding="{Binding IsCurrent}" TargetType="Border" Value="True">
+                                                <Setter Property="BackgroundColor" Value="{StaticResource PlayerAccentMuted}" />
+                                                <Setter Property="Margin" Value="8,2,0,2" />
+                                                <Setter Property="Stroke" Value="{StaticResource PlayerAccent}" />
+                                                <Setter Property="StrokeThickness" Value="2" />
+                                            </DataTrigger>
+                                        </Border.Triggers>
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding Source={x:Reference Root}, Path=BindingContext.SelectTrackCommand}"
+                                                CommandParameter="{Binding .}" />
+                                        </Border.GestureRecognizers>
+                                        <Grid>
+                                            <shapes:Path
+                                                Aspect="Fill"
+                                                Data="M 0,0 L 920,0 L 900,66 L 0,66 Z"
+                                                Fill="{StaticResource PlayerAccentMuted}"
+                                                InputTransparent="True"
+                                                IsVisible="{Binding IsCurrent}"
+                                                Opacity="0.75" />
+                                            <Grid ColumnDefinitions="54,*,Auto" ColumnSpacing="12">
+                                            <Grid>
+                                                <shapes:Path
+                                                    Aspect="Fill"
+                                                    Data="M 0,0 L 46,0 L 36,42 L 0,42 Z"
+                                                    Fill="{StaticResource PlayerSecondarySurfaceBrush}"
+                                                    HeightRequest="42"
+                                                    WidthRequest="46" />
+                                                <Label
+                                                    FontFamily="OpenSansSemibold"
+                                                    FontSize="13"
+                                                    HorizontalTextAlignment="Center"
+                                                    Style="{StaticResource PrimaryLabel}"
+                                                    Text="{Binding Number}"
+                                                    VerticalTextAlignment="Center" />
+                                            </Grid>
+                                            <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                                <Label
+                                                    FontFamily="OpenSansSemibold"
+                                                    FontSize="15"
+                                                    LineBreakMode="TailTruncation"
+                                                    MaxLines="1"
+                                                    Style="{StaticResource PrimaryLabel}"
+                                                    Text="{Binding Title}" />
+                                                <Label
+                                                    IsVisible="{Binding HasArtist}"
+                                                    LineBreakMode="TailTruncation"
+                                                    MaxLines="1"
+                                                    Style="{StaticResource SecondaryLabel}"
+                                                    Text="{Binding Artist}" />
+                                            </VerticalStackLayout>
+                                            <Label
+                                                Grid.Column="2"
+                                                Style="{StaticResource SectionLabel}"
+                                                Text="{Binding CurrentIndicator}"
+                                                TextColor="{StaticResource PlayerAccent}"
+                                                VerticalTextAlignment="Center" />
+                                            </Grid>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+
+                        <!-- Playlist selector overlays the same left content area. -->
+                        <Grid IsVisible="{Binding IsPlaylistMode}" RowDefinitions="Auto,*" RowSpacing="12">
+                            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                                <Label
+                                    FontFamily="OpenSansSemibold"
+                                    FontSize="18"
+                                    Style="{StaticResource PrimaryLabel}"
+                                    Text="CHOOSE SIGNAL SOURCE"
+                                    VerticalTextAlignment="Center" />
+                                <Border Grid.Column="1" Style="{StaticResource AngularActionBorder}">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding AddFolderCommand}" />
+                                    </Border.GestureRecognizers>
+                                    <Label Style="{StaticResource AngularActionLabel}" Text="+ ADD FOLDER" TextColor="{StaticResource PlayerAccent}" />
+                                </Border>
+                                <Border Grid.Column="2" Style="{StaticResource AngularActionBorder}">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding ClosePlaylistsCommand}" />
+                                    </Border.GestureRecognizers>
+                                    <Label Style="{StaticResource AngularActionLabel}" Text="RETURN" />
+                                </Border>
+                            </Grid>
+                            <CollectionView Grid.Row="1" ItemsSource="{Binding Playlists}" SelectionMode="None">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate x:DataType="viewModels:PlaylistRowViewModel">
+                                        <Border Style="{StaticResource TrackRowBorder}">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer
+                                                    Command="{Binding Source={x:Reference Root}, Path=BindingContext.SelectPlaylistCommand}"
+                                                    CommandParameter="{Binding .}" />
+                                            </Border.GestureRecognizers>
+                                            <Grid ColumnDefinitions="10,*,Auto" ColumnSpacing="14">
+                                                <BoxView BackgroundColor="{StaticResource PlayerAccent}" />
+                                                <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                                    <Label FontFamily="OpenSansSemibold" FontSize="16" Style="{StaticResource PrimaryLabel}" Text="{Binding Name}" />
+                                                    <Label LineBreakMode="TailTruncation" MaxLines="1" Style="{StaticResource SecondaryLabel}" Text="{Binding MusicFolderPath}" />
+                                                </VerticalStackLayout>
+                                                <Label Grid.Column="2" Style="{StaticResource AngularActionLabel}" Text="LOAD  ›" TextColor="{StaticResource PlayerAccent}" VerticalTextAlignment="Center" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- Diagonal divider -->
+            <BoxView
+                Grid.Column="0"
+                Margin="0,-80,-2,-80"
+                BackgroundColor="{StaticResource PlayerAccent}"
+                HorizontalOptions="End"
+                InputTransparent="True"
+                Opacity="0.7"
+                Rotation="2"
+                WidthRequest="3" />
+
+            <!-- RIGHT / PLAYBACK CONSOLE -->
+            <Border
+                Grid.Column="1"
+                BackgroundColor="{StaticResource PlayerRaisedSurface}"
+                Padding="30,28"
+                StrokeThickness="0">
+                <Grid RowDefinitions="Auto,Auto,*,Auto,Auto,Auto" RowSpacing="18">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Style="{StaticResource SectionLabel}" Text="NOW PLAYING" TextColor="{StaticResource PlayerAccent}" />
+                            <Label FontFamily="OpenSansSemibold" FontSize="16" Style="{StaticResource PrimaryLabel}" Text="{Binding CurrentPositionText}" />
+                        </VerticalStackLayout>
+                        <Border
+                            Grid.Column="1"
+                            BackgroundColor="{StaticResource PlayerTemporaryMuted}"
+                            IsVisible="{Binding IsTemporaryPlayback}"
+                            Padding="12,7"
+                            Stroke="{StaticResource PlayerTemporary}"
+                            StrokeThickness="1">
+                            <Label Style="{StaticResource SectionLabel}" Text="TEMP PLAY" TextColor="{StaticResource PlayerTemporary}" />
+                        </Border>
+                    </Grid>
+
+                    <BoxView Grid.Row="1" BackgroundColor="{StaticResource PlayerDivider}" HeightRequest="1" />
+
+                    <VerticalStackLayout Grid.Row="2" Spacing="10" VerticalOptions="Center">
+                        <Label Style="{StaticResource SectionLabel}" Text="CURRENT TRANSMISSION" />
+                        <Label
+                            FontFamily="OpenSansSemibold"
+                            FontSize="34"
+                            LineBreakMode="TailTruncation"
+                            MaxLines="2"
+                            Style="{StaticResource PrimaryLabel}"
+                            Text="{Binding CurrentTitle}" />
+                        <Label
+                            FontSize="15"
+                            LineBreakMode="TailTruncation"
+                            MaxLines="1"
+                            Style="{StaticResource SecondaryLabel}"
+                            Text="{Binding CurrentArtist}" />
+                        <Label Style="{StaticResource SectionLabel}" Text="{Binding PlaylistName}" TextColor="{StaticResource PlayerAccent}" />
+
+                        <Border
+                            BackgroundColor="{StaticResource PlayerTemporary}"
+                            HorizontalOptions="Start"
+                            IsVisible="{Binding IsTemporaryPlayback}"
+                            Margin="0,8,0,0"
+                            Padding="16,9"
+                            StrokeThickness="0">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ReturnFromTemporaryCommand}" />
+                            </Border.GestureRecognizers>
+                            <Label
+                                FontFamily="OpenSansSemibold"
+                                FontSize="12"
+                                Text="← RETURN TO SAVED STATE"
+                                TextColor="{StaticResource PlayerBackground}" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <!-- Primary transport controls use vector geometry. -->
+                    <Grid Grid.Row="3" ColumnDefinitions="*,86,*" ColumnSpacing="16" HorizontalOptions="Center" WidthRequest="280">
+                        <Border
+                            BackgroundColor="{StaticResource PlayerSecondarySurface}"
+                            HeightRequest="58"
+                            IsEnabled="{Binding CanGoPrevious}"
+                            Stroke="{StaticResource PlayerDivider}"
+                            WidthRequest="70">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding PreviousCommand}" />
+                            </Border.GestureRecognizers>
+                            <Grid HorizontalOptions="Center" VerticalOptions="Center">
+                                <shapes:Path Data="M 19,4 L 5,14 L 19,24 Z M 5,4 L 2,4 L 2,24 L 5,24 Z" Fill="{StaticResource PlayerPrimaryTextBrush}" HeightRequest="24" WidthRequest="21" />
+                            </Grid>
+                        </Border>
+
+                        <Border
+                            x:Name="PlayButton"
+                            Grid.Column="1"
+                            BackgroundColor="{StaticResource PlayerAccent}"
+                            HeightRequest="78"
+                            IsEnabled="{Binding CanPlayPause}"
+                            Stroke="{StaticResource PlayerAccent}"
+                            StrokeThickness="2"
+                            WidthRequest="86">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding TogglePlayPauseCommand}" Tapped="PlayButton_Tapped" />
+                            </Border.GestureRecognizers>
+                            <Grid HorizontalOptions="Center" VerticalOptions="Center">
+                                <shapes:Path
+                                    Data="M 4,2 L 26,16 L 4,30 Z"
+                                    Fill="{StaticResource PlayerBackgroundBrush}"
+                                    HeightRequest="30"
+                                    IsVisible="{Binding IsPaused}"
+                                    WidthRequest="26" />
+                                <Grid ColumnDefinitions="9,9" ColumnSpacing="7" HeightRequest="30" IsVisible="{Binding IsPlaying}" WidthRequest="25">
+                                    <BoxView BackgroundColor="{StaticResource PlayerBackground}" />
+                                    <BoxView Grid.Column="1" BackgroundColor="{StaticResource PlayerBackground}" />
+                                </Grid>
+                            </Grid>
+                        </Border>
+
+                        <Border
+                            Grid.Column="2"
+                            BackgroundColor="{StaticResource PlayerSecondarySurface}"
+                            HeightRequest="58"
+                            IsEnabled="{Binding CanGoNext}"
+                            Stroke="{StaticResource PlayerDivider}"
+                            WidthRequest="70">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding NextCommand}" />
+                            </Border.GestureRecognizers>
+                            <Grid HorizontalOptions="Center" VerticalOptions="Center">
+                                <shapes:Path Data="M 2,4 L 16,14 L 2,24 Z M 16,4 L 19,4 L 19,24 L 16,24 Z" Fill="{StaticResource PlayerPrimaryTextBrush}" HeightRequest="24" WidthRequest="21" />
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <VerticalStackLayout Grid.Row="4" Spacing="5">
+                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
+                            <Label Style="{StaticResource SecondaryLabel}" Text="{Binding ElapsedText}" />
+                            <Label Grid.Column="2" Style="{StaticResource SectionLabel}" Text="{Binding ProgressPercentText}" TextColor="{StaticResource PlayerAccent}" />
+                            <Label Grid.Column="3" Style="{StaticResource SecondaryLabel}" Text="{Binding DurationText}" />
+                        </Grid>
+                        <Slider
+                            x:Name="ProgressSlider"
+                            DragCompleted="ProgressSlider_DragCompleted"
+                            DragStarted="ProgressSlider_DragStarted"
+                            IsEnabled="{Binding CanSeek}"
+                            Maximum="{Binding ProgressMaximum}"
+                            Minimum="0"
+                            Style="{StaticResource PlayerSlider}"
+                            ValueChanged="ProgressSlider_ValueChanged"
+                            Value="{Binding ProgressValue, Mode=TwoWay}" />
+                    </VerticalStackLayout>
+
+                    <Grid Grid.Row="5" RowDefinitions="Auto,Auto,Auto" RowSpacing="13">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                            <Border
+                                BackgroundColor="{StaticResource PlayerSecondarySurface}"
+                                Padding="13,9"
+                                Stroke="{StaticResource PlayerDivider}">
+                                <Border.Triggers>
+                                    <DataTrigger Binding="{Binding IsLooped}" TargetType="Border" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource PlayerAccentMuted}" />
+                                        <Setter Property="Stroke" Value="{StaticResource PlayerAccent}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ToggleLoopCommand}" />
+                                </Border.GestureRecognizers>
+                                <HorizontalStackLayout Spacing="7">
+                                    <Label Style="{StaticResource AngularActionLabel}" Text="LOOP" />
+                                    <Label Style="{StaticResource AngularActionLabel}" Text="{Binding LoopStateText}" TextColor="{StaticResource PlayerAccent}" />
+                                </HorizontalStackLayout>
+                            </Border>
+                            <Slider
+                                Grid.Column="1"
+                                Maximum="100"
+                                Minimum="0"
+                                Style="{StaticResource PlayerSlider}"
+                                Value="{Binding VolumePercent, Mode=TwoWay}" />
+                            <Label Grid.Column="2" Style="{StaticResource SectionLabel}" Text="{Binding VolumeText}" TextColor="{StaticResource PlayerAccent}" VerticalTextAlignment="Center" />
+                        </Grid>
+
+                        <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <Label Style="{StaticResource StatusMessageLabel}" Text="{Binding StatusMessage}" VerticalTextAlignment="Center" />
+                            <Border Grid.Column="1" Padding="11,7" Style="{StaticResource AngularActionBorder}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding RefreshCommand}" />
+                                </Border.GestureRecognizers>
+                                <Label Style="{StaticResource AngularActionLabel}" Text="REFRESH" />
+                            </Border>
+                        </Grid>
+
+                        <Grid Grid.Row="2" ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <BoxView BackgroundColor="{StaticResource PlayerAccent}" HeightRequest="3" WidthRequest="36" VerticalOptions="Center" />
+                            <Label Grid.Column="1" Style="{StaticResource SectionLabel}" Text="LIVE BACKEND LINK / BASS OUTPUT" />
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Grid
+            BackgroundColor="{StaticResource PlayerOverlay}"
+            IsVisible="{Binding IsBusy}"
+            ZIndex="50">
+            <VerticalStackLayout HorizontalOptions="Center" Spacing="14" VerticalOptions="Center">
+                <ActivityIndicator Color="{StaticResource PlayerAccent}" IsRunning="{Binding IsBusy}" />
+                <Label Style="{StaticResource SectionLabel}" Text="SYNCING SESSION" TextColor="{StaticResource PlayerAccent}" />
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
+</ContentPage>

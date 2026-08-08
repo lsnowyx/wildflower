@@ -1,0 +1,437 @@
+WILDFLOWER - CURRENT PROJECT ORGANIZATION
+=========================================
+
+Snapshot date: 2026-08-06
+Branch: codex-refactor
+
+
+1. SOLUTION OVERVIEW
+--------------------
+
+The solution file is:
+
+    wildflower.sln
+
+It currently contains three projects:
+
+    1. wildflower
+       Legacy, functional Windows Forms application.
+
+    2. wildflowerBackend
+       Standalone backend class-library project containing copied Models and
+       Services from the legacy project.
+
+    3. wildflowerFrontend
+       Newly scaffolded .NET MAUI application. It is still the default template
+       and is not connected to the backend.
+
+Important current detail:
+
+    There are no ProjectReference entries between these projects. They are in
+    the same solution, but they currently compile independently.
+
+
+2. ROOT DIRECTORY
+-----------------
+
+    wildflower.sln
+        Visual Studio solution containing all three projects.
+
+    docs/
+        backend-architecture.md
+            Documents the service-based refactor, persistence contract, and
+            intended frontend/backend boundary.
+
+    wildflower/
+        Legacy WinForms application and one complete backend source copy.
+
+    wildflowerBackend/
+        Second, separate copy of the backend in a class library.
+
+    wildflowerFrontend/
+        Stock .NET MAUI frontend scaffold.
+
+
+3. LEGACY WINFORMS PROJECT: wildflower
+--------------------------------------
+
+Project file:
+
+    wildflower/wildflower.csproj
+
+Project configuration:
+
+    Output type:       WinExe
+    Target framework:  net8.0-windows
+    UI framework:      Windows Forms
+    Nullable:          enabled
+    Implicit usings:   enabled
+
+Dependencies:
+
+    Bass.Net.dll       Local managed assembly in wildflower/lib
+    bass.dll           Local native BASS library copied to output
+    NAudio 2.3.0       NuGet package
+    TagLibSharp 2.3.0  NuGet package
+
+The legacy project has no reference to wildflowerBackend.
+
+Entry point and composition:
+
+    wildflower/Program.cs
+        Enforces a single application instance with a Mutex.
+        Initializes WinForms.
+        Creates AudioDeviceWatcher.
+        Starts Form1.
+
+    wildflower/FormsFolder/Form1.cs
+        Main legacy frontend and current composition root.
+        Constructs metadata, scanner, playlist storage/service, BASS playback,
+        search, and PlayerSessionService directly.
+        Owns WinForms timers, folder picking, control updates, lifecycle events,
+        audio-device-change handling, and temporary-playback presentation.
+
+Legacy UI files:
+
+    wildflower/FormsFolder/
+        Form1.cs / Form1.Designer.cs / Form1.resx
+            Main player window.
+
+        Options.cs / Options.Designer.cs / Options.resx
+            Options/navigation panel.
+
+        Playlists.cs / Playlists.Designer.cs / Playlists.resx
+            Playlist selector and deletion UI.
+
+        Search.cs / Search.Designer.cs / Search.resx
+            Search UI and temporary-track selection.
+
+    wildflower/Helper.cs
+        WinForms image, resizing, animation, and list-item helpers.
+
+    wildflower/ColoredProgressBar.cs
+        Custom WinForms progress-bar control.
+
+    wildflower/icons/
+        PNG button icons and the application ICO file used by WinForms.
+
+Legacy backend source:
+
+    wildflower/Models/
+        LoopMode.cs
+        PlaybackProgress.cs
+        PlaybackState.cs
+        PlayerSessionSnapshot.cs
+        PlayerStatus.cs
+        PlaylistInfo.cs
+        TrackInfo.cs
+
+    wildflower/Services/Audio/
+        IAudioDeviceWatcher.cs
+
+    wildflower/Services/Library/
+        IMetadataService.cs
+        IMusicLibraryScanner.cs
+        MusicLibraryScanner.cs
+        TagLibMetadataService.cs
+
+    wildflower/Services/Playback/
+        IPlaybackEngine.cs
+        BassPlaybackEngine.cs
+
+    wildflower/Services/Playlist/
+        AddPlaylistResult.cs
+        IPlaylistStorage.cs
+        FilePlaylistStorage.cs
+        IPlaylistService.cs
+        PlaylistService.cs
+
+    wildflower/Services/Search/
+        ISearchService.cs
+        SearchService.cs
+
+    wildflower/Services/Session/
+        DeletePlaylistResult.cs
+        IPlayerSessionService.cs
+        PlayerSessionInitializationResult.cs
+        PlayerSessionService.cs
+        SessionActionResult.cs
+
+    wildflower/Helper/AudioDeviceWatcher.cs
+        Windows/NAudio implementation of IAudioDeviceWatcher.
+
+    wildflower/lib/
+        Bass.Net.dll
+        bass.dll
+
+
+4. BACKEND CLASS LIBRARY: wildflowerBackend
+-------------------------------------------
+
+Project file:
+
+    wildflowerBackend/wildflowerBackend.csproj
+
+Project configuration:
+
+    Output type:       Class library
+    Target framework:  net10.0
+    Nullable:          enabled
+    Implicit usings:   enabled
+
+Dependencies:
+
+    Bass.Net.dll       Local managed assembly in wildflowerBackend/lib
+    bass.dll           Local native BASS library copied to output
+    NAudio 2.3.0       NuGet package
+    TagLibSharp 2.3.0  NuGet package
+
+Contents:
+
+    wildflowerBackend/Models/
+    wildflowerBackend/Services/Audio/
+    wildflowerBackend/Services/Library/
+    wildflowerBackend/Services/Playback/
+    wildflowerBackend/Services/Playlist/
+    wildflowerBackend/Services/Search/
+    wildflowerBackend/Services/Session/
+    wildflowerBackend/Helper/AudioDeviceWatcher.cs
+    wildflowerBackend/lib/Bass.Net.dll
+    wildflowerBackend/lib/bass.dll
+
+Current relationship to the legacy project:
+
+    The backend files are currently copies of the backend files under
+    wildflower/. They preserve the same wildflower.Models and
+    wildflower.Services namespaces.
+
+    This project is not referenced by wildflower or wildflowerFrontend.
+    Therefore, it is not currently the shared source of truth, and backend
+    changes can diverge between wildflower and wildflowerBackend.
+
+
+5. MAUI FRONTEND PROJECT: wildflowerFrontend
+--------------------------------------------
+
+Project file:
+
+    wildflowerFrontend/wildflowerFrontend.csproj
+
+Project configuration:
+
+    Output type:       Exe
+    UI framework:      .NET MAUI single project
+    Frameworks:        net10.0-android
+                       net10.0-ios
+                       net10.0-maccatalyst
+                       net10.0-windows10.0.19041.0 on Windows hosts
+    Package type:      Unpackaged on Windows
+    XAML mode:         Source-generated
+
+Dependencies:
+
+    Microsoft.Maui.Controls
+    Microsoft.Extensions.Logging.Debug 10.0.0
+
+Important current detail:
+
+    The MAUI project has no reference to wildflowerBackend or wildflower.
+    It does not currently use IPlayerSessionService, ISearchService,
+    IAudioDeviceWatcher, BASS, playlist persistence, or metadata services.
+
+Application files:
+
+    wildflowerFrontend/MauiProgram.cs
+        Creates the MAUI app, registers the default Open Sans fonts, and enables
+        debug logging. No Wildflower backend services are registered.
+
+    wildflowerFrontend/App.xaml / App.xaml.cs
+        Loads the default Colors.xaml and Styles.xaml resource dictionaries.
+        Creates a Window containing AppShell.
+
+    wildflowerFrontend/AppShell.xaml / AppShell.xaml.cs
+        Default Shell with one route to MainPage.
+
+    wildflowerFrontend/MainPage.xaml / MainPage.xaml.cs
+        Default MAUI template page with the .NET bot image, welcome text, and a
+        click counter. It is not yet a music-player UI.
+
+Resources:
+
+    wildflowerFrontend/Resources/AppIcon/
+        Default template application icon SVG files.
+
+    wildflowerFrontend/Resources/Splash/
+        Default template splash SVG.
+
+    wildflowerFrontend/Resources/Images/
+        Default dotnet_bot.png image.
+
+    wildflowerFrontend/Resources/Fonts/
+        OpenSans-Regular.ttf
+        OpenSans-Semibold.ttf
+
+    wildflowerFrontend/Resources/Styles/
+        Colors.xaml
+        Styles.xaml
+        Default MAUI theme resources and control styles.
+
+    wildflowerFrontend/Resources/Raw/
+        Default AboutAssets.txt template file.
+
+Platform folders:
+
+    wildflowerFrontend/Platforms/Windows/
+        WinUI application entry point, manifests, and package manifest.
+
+    wildflowerFrontend/Platforms/Android/
+        Default Android template entry points and manifest.
+
+    wildflowerFrontend/Platforms/iOS/
+        Default iOS template entry points and metadata.
+
+    wildflowerFrontend/Platforms/MacCatalyst/
+        Default Mac Catalyst template entry points and metadata.
+
+
+6. CURRENT BACKEND RESPONSIBILITIES
+-----------------------------------
+
+Models:
+
+    TrackInfo
+        File path, title, artist, and derived display name.
+
+    PlaylistInfo
+        Playlist id, physical playlist directory, music folder, and derived
+        persistence-file paths.
+
+    PlaybackState
+        Persisted current index and BASS byte position.
+
+    PlaybackProgress
+        Millisecond and BASS-byte progress values.
+
+    PlayerSessionSnapshot
+        Read model for frontend state, current track, playback state, progress,
+        volume, loop mode, and capability flags.
+
+    PlayerStatus / LoopMode
+        Playback and loop enums.
+
+Services:
+
+    PlayerSessionService
+        Coordinates playlist loading, playback, track selection, persistence,
+        shuffle, refresh, automatic advancement, temporary playback, snapshots,
+        and session events.
+
+    BassPlaybackEngine
+        Wraps the BASS playback API and stream handle.
+
+    PlaylistService / FilePlaylistStorage
+        Manage playlists and the on-disk persistence layout.
+
+    MusicLibraryScanner
+        Scans a music folder for supported audio files.
+
+    TagLibMetadataService
+        Loads title and artist metadata with filename fallback.
+
+    SearchService
+        Searches filenames and metadata.
+
+    AudioDeviceWatcher
+        Watches the Windows default render/console device through NAudio.
+
+
+7. PERSISTED DATA ORGANIZATION
+------------------------------
+
+Runtime playlist data remains outside the repository at:
+
+    %APPDATA%\.wildflower\playlists\
+
+Layout:
+
+    lastUsed.txt
+    0\
+        musicFolderPath.txt
+        playlist.txt
+        state.txt
+    1\
+        musicFolderPath.txt
+        playlist.txt
+        state.txt
+    ...
+
+Contract:
+
+    lastUsed.txt
+        Active numbered playlist id.
+
+    musicFolderPath.txt
+        Selected music-library folder path.
+
+    playlist.txt
+        Track filenames, not absolute paths.
+
+    state.txt
+        Exactly: index|BASS byte position
+
+Temporary playback restoration is implemented by re-reading the active
+playlist's persisted state.txt through the backend storage service.
+
+
+8. CURRENT RUNTIME FLOW
+-----------------------
+
+Functional legacy flow:
+
+    Program.cs
+        -> Form1
+        -> constructs concrete backend services
+        -> uses IPlayerSessionService for playback/session commands
+        -> uses WinForms timers for progress, advancement, and 30-second saves
+        -> uses WinForms folder picker and controls
+
+Current MAUI flow:
+
+    Windows/Android/iOS/MacCatalyst platform entry point
+        -> MauiProgram
+        -> App
+        -> AppShell
+        -> MainPage default click-counter template
+
+There is currently no flow from wildflowerFrontend to wildflowerBackend.
+
+
+9. CURRENT SEPARATION STATUS
+----------------------------
+
+Logical separation:
+
+    The legacy code has UI-neutral models and service interfaces, and Form1
+    mostly talks to PlayerSessionService instead of directly using BASS or
+    playlist files.
+
+Physical separation:
+
+    A backend class-library project now exists, but extraction is incomplete.
+    The legacy project still compiles its own complete backend copy, while the
+    class library compiles a second copy. Neither frontend references the class
+    library.
+
+MAUI status:
+
+    The MAUI project is a scaffold only. Backend dependency injection, folder
+    picking, player view models/views, timers, lifecycle saving, BASS native
+    deployment, and audio-device watcher integration have not been implemented.
+
+
+10. GENERATED/LOCAL DIRECTORIES
+-------------------------------
+
+Each project may contain bin/ and obj/ directories from local builds. These are
+generated build artifacts and are not part of the source architecture described
+above.

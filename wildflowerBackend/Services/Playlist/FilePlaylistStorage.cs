@@ -127,7 +127,7 @@ namespace wildflower.Services.Playlist
         public async Task SavePlaybackStateAsync(PlaylistInfo playlist, PlaybackState playbackState)
         {
             Directory.CreateDirectory(playlist.DirectoryPath);
-            await File.WriteAllTextAsync(playlist.StateFile, $"{playbackState.CurrentIndex}|{playbackState.PositionBytes}")
+            await File.WriteAllTextAsync(playlist.StateFile, $"{playbackState.CurrentIndex}|{playbackState.Position}")
                 .ConfigureAwait(false);
         }
     }

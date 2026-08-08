@@ -1,14 +1,17 @@
 using wildflower.Models;
+using wildflower.Services.Library;
 
 namespace wildflower.Services.Playlist
 {
     public sealed class PlaylistService : IPlaylistService
     {
         private readonly IPlaylistStorage storage;
+        private readonly IMusicLibrarySourceAccess sourceAccess;
 
-        public PlaylistService(IPlaylistStorage storage)
+        public PlaylistService(IPlaylistStorage storage, IMusicLibrarySourceAccess sourceAccess)
         {
             this.storage = storage;
+            this.sourceAccess = sourceAccess;
         }
 
         public string PlaylistsDirectory => storage.PlaylistsDirectory;
@@ -87,7 +90,7 @@ namespace wildflower.Services.Playlist
         {
             foreach (PlaylistInfo playlist in await storage.GetPlaylistsAsync())
             {
-                if (!Directory.Exists(playlist.MusicFolderPath))
+                if (!sourceAccess.IsLibraryAvailable(playlist.MusicFolderPath))
                     await storage.DeletePlaylistAsync(playlist.Id);
             }
         }

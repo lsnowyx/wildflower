@@ -1,4 +1,4 @@
 namespace wildflower.Models
 {
-    public sealed record PlaybackState(int CurrentIndex, long PositionBytes);
+    public sealed record PlaybackState(int CurrentIndex, long Position);
 }
