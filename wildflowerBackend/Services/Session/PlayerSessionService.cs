@@ -15,7 +15,8 @@ namespace wildflower.Services.Session
         private readonly Random random = new();
         private readonly List<string> tracks = new();
         private IReadOnlyList<TrackInfo> trackSnapshot = Array.AsReadOnly(Array.Empty<TrackInfo>());
-        private bool isTransitioning;
+        private readonly SemaphoreSlim stateSaveGate = new(1, 1);
+        private int transitionState;
         private int temporaryTrackIndex = -1;
 
         public PlayerSessionService(
@@ -177,8 +178,7 @@ namespace wildflower.Services.Session
                     Message: "Update your music folder path"));
             }
 
-            bool changed = await CleanMissingTracksAsync();
-            changed |= await UpdatePlaylistWithNewSongsAsync();
+            bool changed = await ReconcileTracksAsync();
 
             if (tracks.Count == 0)
             {
@@ -239,15 +239,16 @@ namespace wildflower.Services.Session
 
         public async Task<SessionActionResult> AdvanceIfStoppedAsync()
         {
-            if (isTransitioning ||
-                tracks.Count == 0 ||
+            if (tracks.Count == 0 ||
                 !playbackEngine.HasStream ||
                 playbackEngine.Status != PlayerStatus.Stopped)
             {
                 return SessionActionResult.NoChange;
             }
 
-            isTransitioning = true;
+            if (Interlocked.CompareExchange(ref transitionState, 1, 0) != 0)
+                return SessionActionResult.NoChange;
+
             try
             {
                 if (IsTemporaryPlayback)
@@ -275,7 +276,7 @@ namespace wildflower.Services.Session
             }
             finally
             {
-                isTransitioning = false;
+                Volatile.Write(ref transitionState, 0);
             }
         }
 
@@ -387,6 +388,17 @@ namespace wildflower.Services.Session
             return true;
         }
 
+        public void StopPlayback()
+        {
+            if (playbackEngine.HasStream)
+                SavedPosition = playbackEngine.GetPersistedPosition();
+
+            playbackEngine.Stop();
+            playbackEngine.Free();
+            IsPlaying = false;
+            NotifySessionChanged();
+        }
+
         public bool NextTrack()
         {
             if (tracks.Count == 0 || CurrentIndex >= tracks.Count - 1)
@@ -487,12 +499,23 @@ namespace wildflower.Services.Session
             if (CurrentPlaylist == null || tracks.Count == 0 || IsTemporaryPlayback)
                 return;
 
-            CurrentIndex = ClampTrackIndex(CurrentIndex);
-            SavedPosition = playbackEngine.GetPersistedPosition();
-            await playlistService.SavePlaybackStateAsync(
-                CurrentPlaylist,
-                new PlaybackState(CurrentIndex, SavedPosition))
-                .ConfigureAwait(false);
+            await stateSaveGate.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                if (CurrentPlaylist == null || tracks.Count == 0 || IsTemporaryPlayback)
+                    return;
+
+                CurrentIndex = ClampTrackIndex(CurrentIndex);
+                SavedPosition = playbackEngine.GetPersistedPosition();
+                await playlistService.SavePlaybackStateAsync(
+                    CurrentPlaylist,
+                    new PlaybackState(CurrentIndex, SavedPosition))
+                    .ConfigureAwait(false);
+            }
+            finally
+            {
+                stateSaveGate.Release();
+            }
         }
 
         public async Task<IReadOnlyList<string>> GetTrackDisplayNamesAsync()
@@ -553,14 +576,10 @@ namespace wildflower.Services.Session
             CurrentIndex = savedState?.CurrentIndex ?? 0;
             SavedPosition = Math.Max(0, savedState?.Position ?? 0);
 
-            SessionActionResult refreshResult = await RefreshPlaylistAsync();
-            if (!refreshResult.Succeeded || refreshResult.MissingMusicFolder || tracks.Count == 0)
-                return refreshResult;
-
             CurrentIndex = ClampTrackIndex(CurrentIndex);
             PlayTrackCore(CurrentIndex, SavedPosition, updateCurrentIndex: true);
 
-            return refreshResult with { TrackListChanged = true, PlaybackChanged = true };
+            return new SessionActionResult(TrackListChanged: true, PlaybackChanged: true);
         }
 
         private bool PlayTrackCore(int index, long startPosition, bool updateCurrentIndex)
@@ -601,51 +620,40 @@ namespace wildflower.Services.Session
             CurrentIndex = ClampTrackIndex(CurrentIndex);
         }
 
-        private async Task<bool> CleanMissingTracksAsync()
+        private async Task<bool> ReconcileTracksAsync()
         {
+            if (CurrentPlaylist == null)
+                return false;
+
+            IReadOnlyList<string> scannedTracks = await musicLibraryScanner.ScanAsync(CurrentPlaylist.MusicFolderPath);
+            var availableTracks = new HashSet<string>(scannedTracks, StringComparer.OrdinalIgnoreCase);
             int removedBeforeCurrent = 0;
             var validTracks = new List<string>();
 
-            await Task.Run(() =>
+            for (int i = 0; i < tracks.Count; i++)
             {
-                for (int i = 0; i < tracks.Count; i++)
+                string file = tracks[i];
+                if (availableTracks.Contains(file))
                 {
-                    string file = tracks[i];
-                    if (sourceAccess.IsTrackAvailable(file))
-                    {
-                        validTracks.Add(file);
-                    }
-                    else if (i < CurrentIndex)
-                    {
-                        removedBeforeCurrent++;
-                    }
+                    validTracks.Add(file);
                 }
-            });
+                else if (i < CurrentIndex)
+                {
+                    removedBeforeCurrent++;
+                }
+            }
 
-            bool changed = validTracks.Count != tracks.Count;
+            var currentPaths = new HashSet<string>(validTracks, StringComparer.OrdinalIgnoreCase);
+            validTracks.AddRange(scannedTracks.Where(song => !currentPaths.Contains(song)));
+
+            bool changed = validTracks.Count != tracks.Count ||
+                !validTracks.SequenceEqual(tracks, StringComparer.OrdinalIgnoreCase);
             if (!changed)
                 return false;
 
             tracks.Clear();
             tracks.AddRange(validTracks);
             CurrentIndex = Math.Max(0, CurrentIndex - removedBeforeCurrent);
-            RefreshTrackSnapshot();
-            await SavePlaylistAsync();
-            return true;
-        }
-
-        private async Task<bool> UpdatePlaylistWithNewSongsAsync()
-        {
-            if (CurrentPlaylist == null)
-                return false;
-
-            var currentPaths = new HashSet<string>(tracks, StringComparer.OrdinalIgnoreCase);
-            var allSongs = await musicLibraryScanner.ScanAsync(CurrentPlaylist.MusicFolderPath);
-            var newSongs = allSongs.Where(song => !currentPaths.Contains(song)).ToArray();
-            if (newSongs.Length == 0)
-                return false;
-
-            tracks.AddRange(newSongs);
             RefreshTrackSnapshot();
             await SavePlaylistAsync();
             return true;

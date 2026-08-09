@@ -89,7 +89,11 @@ public partial class MainPlayerPage : ContentPage
             if (currentTrack is null)
                 return;
 
-            TrackCollection.ScrollTo(currentTrack, position: ScrollToPosition.Start, animate: true);
+            int visibleIndex = ViewModel.VisibleTracks.IndexOf(currentTrack);
+            if (visibleIndex < 0)
+                return;
+
+            TrackCollection.ScrollTo(visibleIndex, position: ScrollToPosition.Start, animate: false);
             lastScrolledIndex = currentIndex;
             lastScrolledTrackRowsRevision = trackRowsRevision;
         });

@@ -33,6 +33,7 @@ namespace wildflower.Services.Session
         bool PlayTrack(int index, long startPosition = 0);
         bool PlayCurrentTrack(long startPosition = 0);
         bool TogglePlayPause();
+        void StopPlayback();
         bool NextTrack();
         bool PreviousTrack();
         void SetLooped(bool looped);

@@ -62,6 +62,12 @@ public partial class App : Application
         }
 
         if (mainPlayerViewModel is not null)
+        {
+#if ANDROID
+            await mainPlayerViewModel.PauseAsync();
+#else
             await mainPlayerViewModel.DisposeAsync();
+#endif
+        }
     }
 }

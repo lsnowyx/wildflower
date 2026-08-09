@@ -18,6 +18,8 @@ public sealed class MainPlayerViewModel : ObservableObject, IAsyncDisposable
     private readonly IMetadataService metadataService;
     private readonly IAudioDeviceWatcher audioDeviceWatcher;
     private readonly IFolderPickerService folderPickerService;
+    private readonly ITrackMetadataCache persistentMetadataCache;
+    private readonly IPlaybackServiceController playbackServiceController;
     private readonly Dictionary<string, TrackInfo> metadataCache = new(StringComparer.OrdinalIgnoreCase);
 
     private IDispatcherTimer? progressTimer;
@@ -65,13 +67,17 @@ public sealed class MainPlayerViewModel : ObservableObject, IAsyncDisposable
         ISearchService searchService,
         IMetadataService metadataService,
         IAudioDeviceWatcher audioDeviceWatcher,
-        IFolderPickerService folderPickerService)
+        IFolderPickerService folderPickerService,
+        ITrackMetadataCache persistentMetadataCache,
+        IPlaybackServiceController playbackServiceController)
     {
         this.playerSession = playerSession;
         this.searchService = searchService;
         this.metadataService = metadataService;
         this.audioDeviceWatcher = audioDeviceWatcher;
         this.folderPickerService = folderPickerService;
+        this.persistentMetadataCache = persistentMetadataCache;
+        this.playbackServiceController = playbackServiceController;
 
         SelectTrackCommand = new Command<TrackRowViewModel>(async track => await SelectTrackAsync(track));
         TogglePlayPauseCommand = new Command(TogglePlayPause);
@@ -89,7 +95,7 @@ public sealed class MainPlayerViewModel : ObservableObject, IAsyncDisposable
         RefreshCommand = new Command(async () => await RefreshPlaylistAsync());
     }
 
-    public ObservableCollection<TrackRowViewModel> VisibleTracks { get; } = new();
+    public ObservableRangeCollection<TrackRowViewModel> VisibleTracks { get; } = new();
     public ObservableCollection<PlaylistRowViewModel> Playlists { get; } = new();
 
     public ICommand SelectTrackCommand { get; }
@@ -300,7 +306,6 @@ public sealed class MainPlayerViewModel : ObservableObject, IAsyncDisposable
 
         initialized = true;
         IsBusy = true;
-        Subscribe();
 
         try
         {
@@ -311,6 +316,7 @@ public sealed class MainPlayerViewModel : ObservableObject, IAsyncDisposable
             TryStartAudioWatcher();
 
             PlayerSessionInitializationResult result = await playerSession.InitializeAsync();
+            Subscribe();
             if (result.Loaded)
             {
                 StatusMessage = playbackAvailable ? "SESSION RESTORED" : StatusMessage;
@@ -327,6 +333,8 @@ public sealed class MainPlayerViewModel : ObservableObject, IAsyncDisposable
 
             await RefreshFromBackendAsync(forceTracks: true);
             StartTimers();
+            if (result.Loaded)
+                _ = ReconcilePlaylistAfterStartupAsync();
         }
         catch (Exception ex)
         {
@@ -392,10 +400,6 @@ public sealed class MainPlayerViewModel : ObservableObject, IAsyncDisposable
 
         try
         {
-#if ANDROID
-            if (playerSession.GetSnapshot().IsPlaying)
-                playerSession.TogglePlayPause();
-#endif
             audioDeviceWatcher.Stop();
             await playerSession.SavePlaybackStateAsync();
         }
@@ -441,7 +445,9 @@ public sealed class MainPlayerViewModel : ObservableObject, IAsyncDisposable
 
         audioDeviceWatcher.Stop();
         audioDeviceWatcher.Dispose();
+#if !ANDROID
         playerSession.Dispose();
+#endif
     }
 
     private void Subscribe()
@@ -584,6 +590,7 @@ public sealed class MainPlayerViewModel : ObservableObject, IAsyncDisposable
 
     private async Task ApplySnapshotAsync(PlayerSessionSnapshot snapshot, bool forceTracks)
     {
+        playbackServiceController.Update(snapshot);
         string newTrackSetKey = string.Join('\u001f', snapshot.Tracks.Select(track => track.FilePath));
         bool tracksChanged = forceTracks || !string.Equals(trackSetKey, newTrackSetKey, StringComparison.Ordinal);
 
@@ -608,9 +615,11 @@ public sealed class MainPlayerViewModel : ObservableObject, IAsyncDisposable
         if (tracksChanged)
         {
             trackSetKey = newTrackSetKey;
-            await LoadTrackMetadataAsync(snapshot.Tracks);
+            string[] missingMetadata = await LoadCachedTrackMetadataAsync(snapshot.Tracks);
             if (!IsSearchMode)
                 PopulateTrackRows(snapshot.Tracks.Select(track => track.FilePath), snapshot.CurrentIndex);
+            if (missingMetadata.Length > 0)
+                _ = WarmMetadataCacheAsync(missingMetadata, newTrackSetKey);
         }
         else
         {
@@ -629,20 +638,67 @@ public sealed class MainPlayerViewModel : ObservableObject, IAsyncDisposable
         ApplySnapshotProgress(snapshot);
     }
 
-    private async Task LoadTrackMetadataAsync(IEnumerable<TrackInfo> snapshotTracks)
+    private async Task<string[]> LoadCachedTrackMetadataAsync(IEnumerable<TrackInfo> snapshotTracks)
     {
-        string[] paths = snapshotTracks.Select(track => track.FilePath).ToArray();
-        IReadOnlyList<TrackInfo> metadata = await metadataService.GetTrackInfoAsync(paths);
+        TrackInfo[] tracks = snapshotTracks.ToArray();
+        IReadOnlyDictionary<string, TrackInfo> stored = await persistentMetadataCache.LoadAsync();
 
         metadataCache.Clear();
-        foreach (TrackInfo track in metadata)
-            metadataCache[track.FilePath] = track;
+        var missing = new List<string>();
+        foreach (TrackInfo track in tracks)
+        {
+            if (stored.TryGetValue(track.FilePath, out TrackInfo? cached))
+                metadataCache[track.FilePath] = cached;
+            else
+            {
+                metadataCache[track.FilePath] = track;
+                missing.Add(track.FilePath);
+            }
+        }
+
+        return missing.ToArray();
+    }
+
+    private async Task WarmMetadataCacheAsync(string[] paths, string expectedTrackSetKey)
+    {
+        try
+        {
+            IReadOnlyList<TrackInfo> metadata = await metadataService.GetTrackInfoAsync(paths);
+            await persistentMetadataCache.StoreAsync(metadata);
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                if (disposed || !string.Equals(trackSetKey, expectedTrackSetKey, StringComparison.Ordinal))
+                    return;
+
+                foreach (TrackInfo track in metadata)
+                    metadataCache[track.FilePath] = track;
+
+                foreach (TrackRowViewModel row in VisibleTracks)
+                {
+                    if (metadataCache.TryGetValue(row.FilePath, out TrackInfo? info))
+                        row.ApplyMetadata(info);
+                }
+
+                PlayerSessionSnapshot snapshot = playerSession.GetSnapshot();
+                if (snapshot.CurrentTrack is not null &&
+                    metadataCache.TryGetValue(snapshot.CurrentTrack.FilePath, out TrackInfo? current))
+                {
+                    CurrentTitle = current.Title;
+                    CurrentArtist = string.IsNullOrWhiteSpace(current.Artist) ? "FILENAME SOURCE" : current.Artist;
+                }
+            });
+        }
+        catch
+        {
+            // Metadata is an optional enhancement. Filename rows remain usable.
+        }
     }
 
     private void PopulateTrackRows(IEnumerable<string> paths, int currentIndex)
     {
-        VisibleTracks.Clear();
         IReadOnlyList<string> sessionTracks = playerSession.Tracks;
+        var rows = new List<TrackRowViewModel>();
 
         foreach (string path in paths)
         {
@@ -654,13 +710,29 @@ public sealed class MainPlayerViewModel : ObservableObject, IAsyncDisposable
                 ? cached
                 : new TrackInfo(path, Path.GetFileNameWithoutExtension(path), string.Empty);
 
-            VisibleTracks.Add(new TrackRowViewModel(index, path, info.Title, info.Artist)
+            rows.Add(new TrackRowViewModel(index, path, info.Title, info.Artist)
             {
                 IsCurrent = index == currentIndex
             });
         }
 
+        VisibleTracks.ReplaceRange(rows);
+
         TrackRowsReady?.Invoke(this, EventArgs.Empty);
+    }
+
+    private async Task ReconcilePlaylistAfterStartupAsync()
+    {
+        try
+        {
+            SessionActionResult result = await playerSession.RefreshPlaylistAsync();
+            if (result.TrackListChanged)
+                StatusMessage = "MUSIC LIBRARY UPDATED";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"LIBRARY REFRESH WARNING: {ex.Message}";
+        }
     }
 
     private void UpdateCurrentRows(int currentIndex)
